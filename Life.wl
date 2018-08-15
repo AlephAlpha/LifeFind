@@ -73,7 +73,7 @@ RuleNumber["Salad"] = RuleNumber["B2i34c/S2-i3"];
 RuleNumber["Snowflakes"] = RuleNumber["B2ci3ai4c8/S02ae3eijkq4iz5ar6i7e"];
 RuleNumber["tlife"] = RuleNumber["B3/S2-i34q"];
 RuleNumber[rule_String] :=
-  If[# == {}, Message[RuleNumber::nrule]; -1, #[[1]]] &[
+  If[# == {}, Message[RuleNumber::nrule, rule]; -1, #[[1]]] &[
    StringCases[rule,
     StartOfString ~~ "b" ~~
       b : (DigitCharacter ~~ ("-" | "") ~~
