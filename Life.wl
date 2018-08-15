@@ -7,11 +7,11 @@ RuleNumber::usage = "Convert a rule string to a rule number.";
 ToRLE::usage = "Convert a 2d 0-1 array to a string of RLE format.";
 FromRLE::usage = "Convert a string of RLE format to an array.";
 FromAPGCode::usage = "Convert an apgcode to an array.";
-SearchPattern::usage = 
+SearchPattern::usage =
   "SearchPattern[x, y, p, dx, dy] searches for a pattern with \
 bounding box (x, y), period p, and translating (dx, dy) for each \
-period. It return a 0-1 array.";
-LifeFind::usage = 
+period. It returns a 0-1 array.";
+LifeFind::usage =
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
 returns a list of plots, and prints the RLE of the first phrase.";
@@ -21,7 +21,7 @@ Begin["`Private`"];
 $Rule = "B3/S23";
 
 RuleNumber::nrule = "`1` is not a valid rule. This package only \
-support totalistic and isotropic non-totalistic Life-like cellular \
+supports totalistic and isotropic non-totalistic Life-like cellular \
 automata for the Moore neighbourhood.";
 RuleNumber["Life"] = RuleNumber["B3/S23"];
 RuleNumber["GameOfLife"] = RuleNumber["B3/S23"];
@@ -72,22 +72,22 @@ RuleNumber["JustFriends"] = RuleNumber["B2-a/S12"];
 RuleNumber["Salad"] = RuleNumber["B2i34c/S2-i3"];
 RuleNumber["Snowflakes"] = RuleNumber["B2ci3ai4c8/S02ae3eijkq4iz5ar6i7e"];
 RuleNumber["tlife"] = RuleNumber["B3/S2-i34q"];
-RuleNumber[rule_String] := 
+RuleNumber[rule_String] :=
   If[# == {}, Message[RuleNumber::nrule]; -1, #[[1]]] &[
-   StringCases[rule, 
-    StartOfString ~~ "b" ~~ 
+   StringCases[rule,
+    StartOfString ~~ "b" ~~
       b : (DigitCharacter ~~ ("-" | "") ~~
-          ("c" | "e" | "k" | "a" | "i" | "n" | 
-             "y" | "q" | "j" | "r" | "t" | "w" | "z") ...) ... ~~ 
-      "/" | "/s" | "s" ~~ 
+          ("c" | "e" | "k" | "a" | "i" | "n" |
+             "y" | "q" | "j" | "r" | "t" | "w" | "z") ...) ... ~~
+      "/" | "/s" | "s" ~~
       s : (DigitCharacter ~~ ("-" | "") ~~
-          ("c" | "e" | "k" | "a" | "i" | "n" | 
-             "y" | "q" | "j" | "r" | "t" | "w" | "z") ...) ... ~~ 
+          ("c" | "e" | "k" | "a" | "i" | "n" |
+             "y" | "q" | "j" | "r" | "t" | "w" | "z") ...) ... ~~
       EndOfString :>
      (Total[2^DeleteDuplicates@Flatten@{#, #2 + 16}] & @@
-       (StringCases[#, 
+       (StringCases[#,
            KeyValueMap[
-            n : # ~~ h : ("-" | "") ~~ 
+            n : # ~~ h : ("-" | "") ~~
                c : (Alternatives @@ Keys@#2) ... :>
               #2 /@ Which[c == "", Keys@#2,
                 h == "-", Complement[Keys@#2, Characters@c],
@@ -142,58 +142,59 @@ RuleNumber[rule_String] :=
                "n" -> {238, 427}|>,
              "7" -> <|"c" -> {239, 491, 431, 494},
                "e" -> {367, 493, 463, 487}|>,
-             "8" -> <|"c" -> {495}|>|>]] & /@ {b, s})), 
+             "8" -> <|"c" -> {495}|>|>]] & /@ {b, s})),
     IgnoreCase -> True]];
 
 Options[ToRLE] = {"Rule" :> $Rule};
-ToRLE[array_, OptionsPattern[]] := 
-  "x = " <> #2 <> ", y = " <> #1 <> ", rule = " <> 
+ToRLE[array_, OptionsPattern[]] :=
+  "x = " <> #2 <> ", y = " <> #1 <> ", rule = " <>
       OptionValue["Rule"] <> "\n" & @@ ToString /@ Dimensions@array <>
     StringRiffle[
     StringCases[
      StringReplace[
       StringReplace[Riffle[array /. {1 -> "o", 0 -> "b"}, "$"] <> "!",
-        "b" .. ~~ s : "$" | "!" :> s], 
-      r : (x_) .. /; StringLength@r > 1 :> 
-       ToString@StringLength@r <> x], 
-     l : (___ ~~ "o" | "b" | "$" | "!") /; StringLength@l <= 70], 
+        "b" .. ~~ s : "$" | "!" :> s],
+      r : (x_) .. /; StringLength@r > 1 :>
+       ToString@StringLength@r <> x],
+     l : (___ ~~ "o" | "b" | "$" | "!") /; StringLength@l <= 70],
     "\n"];
 
-FromRLE[rle_] := 
-  PadRight[StringCases[{"." | "b" -> 0, "o" | "O" | "*" -> 1}] /@ 
+FromRLE[rle_] :=
+  PadRight[StringCases[{"." | "b" -> 0, "o" | "O" | "*" -> 1}] /@
     StringSplit[
      StringReplace[
       StringDelete[
-       rle, (StartOfLine ~~ ("x" | "#") ~~ Shortest@___ ~~ 
-          EndOfLine) | "\n" | ("!" ~~ ___)], 
-      n : DigitCharacter .. ~~ a_ :> StringRepeat[a, FromDigits@n]], 
+       rle, (StartOfLine ~~ ("x" | "#") ~~ Shortest@___ ~~
+          EndOfLine) | "\n" | ("!" ~~ ___)],
+      n : DigitCharacter .. ~~ a_ :> StringRepeat[a, FromDigits@n]],
      "$"]];
 
 FromAPGCode::napg = "Invalid apgcode.";
-FromAPGCode[apgcode_] := 
+FromAPGCode[apgcode_] :=
   If[# == {}, Message[FromAPGCode::napg]; {}, #[[1]]] &[
-   StringCases[apgcode, 
-    StartOfString ~~ "x" ~~ ___ ~~ "_" ~~ code : WordCharacter ... :> 
+   StringCases[apgcode,
+    StartOfString ~~ "x" ~~ ___ ~~ "_" ~~ code : WordCharacter ... :>
      Transpose[
-      Join @@ Reverse /@ IntegerDigits[#, 2, 5] & /@ 
+      Join @@ Reverse /@ IntegerDigits[#, 2, 5] & /@
        Thread@PadRight@
          StringCases[
           StringSplit[
            StringReplace[
-            code, {"y" ~~ d_ :> StringRepeat["0", 4 + FromDigits@d], 
-             "w" -> "00", "x" -> "000"}], "z"], 
+            code, {"y" ~~ d_ :> StringRepeat["0", 4 + FromDigits@d],
+             "w" -> "00", "x" -> "000"}], "z"],
           d_ :> FromDigits@d]]]];
 
-SearchPattern::nsym = 
-  "Invalid symmetry. Vaild symmetries are: \"C1\",\"C2\",\"C4\",\"D2-\
-\",\"D2\\\\\",\"D2|\",\"D2/\",\"D4+\",\"D4X\",\"D8\".";
+SearchPattern::nsym =
+  "Invalid symmetry. Only supports the following symmetries: \
+\"C1\",\"C2\",\"C4\",\"D2-\",\"D2\\\\\",\"D2|\",\"D2/\",\"D4+\",\"D4X\
+\",\"D8\".";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1"};
-SearchPattern[x_, y_, opts : OptionsPattern[]] := 
+SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
-SearchPattern[x_, y_, p_, opts : OptionsPattern[]] := 
+SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, 0, 0, opts];
-SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] := 
-  Block[{b, r = RandomInteger[1, {x, y, p}]}, 
+SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
+  Block[{b, r = RandomInteger[1, {x, y, p}]},
    Transpose[
       Mod[r + ArrayReshape[Boole@#, {x, y, p}], 2], {2, 3, 1}] &@
     SatisfiabilityInstances[
@@ -204,37 +205,37 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
               "D2-", b[##] \[Equivalent] b[x + 1 - #, #2, #3],
               "D2\\", b[##] \[Equivalent] b[#2, #, #3],
               "D2|", b[##] \[Equivalent] b[#, y + 1 - #2, #3],
-              "D2/", 
+              "D2/",
               b[##] \[Equivalent] b[y + 1 - #2, x + 1 - #, #3],
-              "D4+", 
-              b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent] 
+              "D4+",
+              b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent]
                b[#, y + 1 - #2, #3],
-              "D4X", 
-              b[##] \[Equivalent] b[#2, #, #3] \[Equivalent] 
+              "D4X",
+              b[##] \[Equivalent] b[#2, #, #3] \[Equivalent]
                b[y + 1 - #2, x + 1 - #, #3],
-              "D8", 
-              b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent] 
+              "D8",
+              b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent]
                b[#, y + 1 - #2, #3] \[Equivalent] b[#2, #, #3],
-              _, Message[SearchPattern::nsym]; 
+              _, Message[SearchPattern::nsym];
               True] &&
-             (b[##] \[Equivalent] 
-               BooleanFunction[RuleNumber[OptionValue["Rule"]], 
-                Flatten@Array[b, {3, 3, 1}, {##} - 1]]) /. 
-            b[i_, j_, 0] :> b[i + dx, j + dy, p] /. 
-           b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :> 
-            False /. 
-          b[i_, j_, t_] /; r[[i, j, t]] == 1 :> ! b[i, j, t], 
-         "CNF"] &, {x + 2, y + 2, p}, {0, 0, 1}, And], 
+             (b[##] \[Equivalent]
+               BooleanFunction[RuleNumber[OptionValue["Rule"]],
+                Flatten@Array[b, {3, 3, 1}, {##} - 1]]) /.
+            b[i_, j_, 0] :> b[i + dx, j + dy, p] /.
+           b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :>
+            False /.
+          b[i_, j_, t_] /; r[[i, j, t]] == 1 :> ! b[i, j, t],
+         "CNF"] &, {x + 2, y + 2, p}, {0, 0, 1}, And],
       Flatten@Array[b, {x, y, p}]][[1]]];
 
-Options[LifeFind] = 
-  Join[Options[SearchPattern], 
+Options[LifeFind] =
+  Join[Options[SearchPattern],
    Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
-LifeFind[args__, opts : OptionsPattern[]] := 
-  ArrayPlot[#, Mesh -> All, 
-     FilterRules[{opts}, Options[ArrayPlot]]] & /@ 
-   Echo[SearchPattern[args, 
-     FilterRules[{opts}, Options[SearchPattern]]], "RLE: ", 
+LifeFind[args__, opts : OptionsPattern[]] :=
+  ArrayPlot[#, Mesh -> All,
+     FilterRules[{opts}, Options[ArrayPlot]]] & /@
+   Echo[SearchPattern[args,
+     FilterRules[{opts}, Options[SearchPattern]]], "RLE: ",
     ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &];
 
 End[];
