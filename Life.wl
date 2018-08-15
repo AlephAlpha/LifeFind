@@ -184,10 +184,6 @@ FromAPGCode[apgcode_] :=
              "w" -> "00", "x" -> "000"}], "z"],
           d_ :> FromDigits@d]]]];
 
-SearchPattern::nsym =
-  "Invalid symmetry. Only supports the following symmetries: \
-\"C1\",\"C2\",\"C4\",\"D2-\",\"D2\\\\\",\"D2|\",\"D2/\",\"D4+\",\"D4X\
-\",\"D8\".";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1"};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
@@ -216,8 +212,7 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
               "D8",
               b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent]
                b[#, y + 1 - #2, #3] \[Equivalent] b[#2, #, #3],
-              _, Message[SearchPattern::nsym];
-              True] &&
+              _, True] &&
              (b[##] \[Equivalent]
                BooleanFunction[RuleNumber[OptionValue["Rule"]],
                 Flatten@Array[b, {3, 3, 1}, {##} - 1]]) /.
