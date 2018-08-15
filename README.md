@@ -21,16 +21,17 @@ LifeFind[5, 16, 3, 1, 0]
 
 还可以设置 `"Rule"` 和 `"Symmetry"` 两个参数，来设定规则和对称性。
 
-目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持 B0 的规则，也不支持六边形的或者 [von Neumann 邻域](http://conwaylife.com/wiki/Von_Neumann_neighbourhood)的规则。
+目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持以 B0 开头的规则，也不支持六边形的或者 [von Neumann 邻域](http://conwaylife.com/wiki/Von_Neumann_neighbourhood)的规则。
 
 支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)，"D2" 和 "D4" 后面的符号代表它的对称轴。
 
 除了 `SearchPattern` 和 `LifeFind`，这个包里还有以下几个函数：
 
-* `RuleNumber`: 把一个规则转写成一个大数字，可以用在 Mathematica 的 [`CellularAutomaton`](https://reference.wolfram.com/language/ref/CellularAutomaton.html) 函数中。
-* `ToRLE`: 把一个数组转换成 RLE 格式。
+* `RuleNumber`: 把一个规则转写成一个大数字，可以用在 Mathematica 的 [`CellularAutomaton`](https://reference.wolfram.com/language/ref/CellularAutomaton.html) 函数中。只支持前面说的那些规则。
+* `ToRLE`: 把一个数组转换成 RLE 格式。可以设置 `"Rule"` 参数。
 * `FromRLE`: 把 RLE 转换成一个数组。
-* `FromAPGCode`: 把 apgcode 转换成一个数组。
+* `FromAPGCode`: 把 [apgcode](www.conwaylife.com/wiki/Apgcode) 转换成一个数组。
+* `ExportGIF`: 把一个图样导出成 GIF 文件。用法是 `ExportGIF[file, pattern, gen]`，这里 `file`、`pattern`、`gen` 分别为要导出到的文件名、图样（一个数组）、绘制的代数。可以设置 `"Rule"` 和 `"DisplayDurations"` 两个参数。
 
 这几个转换的函数都只支持两种状态的规则，也就是说，那个数组只有 0 和 1。
 

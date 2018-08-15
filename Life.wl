@@ -15,6 +15,8 @@ LifeFind::usage =
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
 returns a list of plots, and prints the RLE of the first phrase.";
+ExportGIF::usage = "ExportGIF[file, pattern, gen] generates plots of \
+the pattern, and exports it to a GIF file.";
 
 Begin["`Private`"];
 
@@ -232,6 +234,18 @@ LifeFind[args__, opts : OptionsPattern[]] :=
    Echo[SearchPattern[args,
      FilterRules[{opts}, Options[SearchPattern]]], "RLE: ",
     ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &];
+
+Options[ExportGIF] = 
+  Join[{"Rule" :> $Rule, "DisplayDurations" -> 0.5}, 
+   Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
+ExportGIF[file_, pattern_, gen_, opts : OptionsPattern[]] := 
+  Export[file, 
+   ArrayPlot[#, Mesh -> All, 
+      FilterRules[{opts}, Options[ArrayPlot]]] & /@ 
+    CellularAutomaton[{RuleNumber@OptionValue["Rule"], 
+      2, {1, 1}}, {pattern, 0}, gen - 1], 
+   "DisplayDurations" -> OptionValue["DisplayDurations"], 
+   "AnimationRepetitions" -> Infinity];
 
 End[];
 
