@@ -21,7 +21,7 @@ LifeFind[5, 16, 3, 1, 0]
 
 还可以设置 `"Rule"` 和 `"Symmetry"` 两个参数，来设定规则和对称性。
 
-目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持以 B0 开头的规则，也不支持六边形的或者 [von Neumann 邻域](http://conwaylife.com/wiki/Von_Neumann_neighbourhood)的规则。
+目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持六边形的或者 [von Neumann 邻域](http://conwaylife.com/wiki/Von_Neumann_neighbourhood)的规则。
 
 支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)，"D2" 和 "D4" 后面的符号代表它的对称轴。
 

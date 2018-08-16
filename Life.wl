@@ -186,54 +186,56 @@ FromAPGCode[apgcode_] :=
              "w" -> "00", "x" -> "000"}], "z"],
           d_ :> FromDigits@d]]]];
 
+SearchPattern::nsat = "No such pattern.";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1"};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, 0, 0, opts];
-SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
-  Block[{b, r = RandomInteger[1, {x, y, p}]},
-   Transpose[
-      Mod[r + ArrayReshape[Boole@#, {x, y, p}], 2], {2, 3, 1}] &@
+SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] := 
+  Block[{b, r = RandomInteger[1, {x, y, p}]}, 
+   If[# == {}, Message[SearchPattern::nsat]; {}, 
+      Transpose[
+       Mod[r + ArrayReshape[Boole@#[[1]], {x, y, p}], 2], {2, 3, 1}]] &@
     SatisfiabilityInstances[
-      Array[BooleanConvert[Switch[OptionValue["Symmetry"],
-              "C1", True,
-              "C2", b[##] \[Equivalent] b[x + 1 - #, y + 1 - #2, #3],
-              "C4", b[##] \[Equivalent] b[#2, x + 1 - #, #3],
-              "D2-", b[##] \[Equivalent] b[x + 1 - #, #2, #3],
-              "D2\\", b[##] \[Equivalent] b[#2, #, #3],
-              "D2|", b[##] \[Equivalent] b[#, y + 1 - #2, #3],
-              "D2/",
-              b[##] \[Equivalent] b[y + 1 - #2, x + 1 - #, #3],
-              "D4+",
-              b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent]
-               b[#, y + 1 - #2, #3],
-              "D4X",
-              b[##] \[Equivalent] b[#2, #, #3] \[Equivalent]
-               b[y + 1 - #2, x + 1 - #, #3],
-              "D8",
-              b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent]
-               b[#, y + 1 - #2, #3] \[Equivalent] b[#2, #, #3],
-              _, True] &&
-             (b[##] \[Equivalent]
-               BooleanFunction[RuleNumber[OptionValue["Rule"]],
-                Flatten@Array[b, {3, 3, 1}, {##} - 1]]) /.
-            b[i_, j_, 0] :> b[i + dx, j + dy, p] /.
-           b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :>
-            False /.
-          b[i_, j_, t_] /; r[[i, j, t]] == 1 :> ! b[i, j, t],
-         "CNF"] &, {x + 2, y + 2, p}, {0, 0, 1}, And],
-      Flatten@Array[b, {x, y, p}]][[1]]];
+     Array[BooleanConvert[Switch[OptionValue["Symmetry"],
+             "C1", True,
+             "C2", b[##] \[Equivalent] b[x + 1 - #, y + 1 - #2, #3],
+             "C4", b[##] \[Equivalent] b[#2, x + 1 - #, #3],
+             "D2-", b[##] \[Equivalent] b[x + 1 - #, #2, #3],
+             "D2\\", b[##] \[Equivalent] b[#2, #, #3],
+             "D2|", b[##] \[Equivalent] b[#, y + 1 - #2, #3],
+             "D2/", b[##] \[Equivalent] b[y + 1 - #2, x + 1 - #, #3],
+             "D4+", 
+             b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent] 
+              b[#, y + 1 - #2, #3],
+             "D4X", 
+             b[##] \[Equivalent] b[#2, #, #3] \[Equivalent] 
+              b[y + 1 - #2, x + 1 - #, #3],
+             "D8", 
+             b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent] 
+              b[#, y + 1 - #2, #3] \[Equivalent] b[#2, #, #3],
+             _, True] &&
+            (b[##] \[Equivalent] 
+              BooleanFunction[RuleNumber[OptionValue["Rule"]], 
+               Flatten@Array[b, {3, 3, 1}, {##} - 1]]) /.
+           b[i_, j_, 0] :> b[i + dx, j + dy, p] /.
+          b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :> 
+           If[EvenQ@RuleNumber[OptionValue["Rule"]], False, EvenQ@t] /.
+                  b[i_, j_, t_] /; r[[i, j, t]] == 1 :> ! b[i, j, t], 
+        "CNF"] &, {x + 2, y + 2, p}, {0, 0, 1}, And], 
+     Flatten@Array[b, {x, y, p}]]];
 
 Options[LifeFind] =
   Join[Options[SearchPattern],
    Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
-LifeFind[args__, opts : OptionsPattern[]] :=
-  ArrayPlot[#, Mesh -> All,
-     FilterRules[{opts}, Options[ArrayPlot]]] & /@
-   Echo[SearchPattern[args,
-     FilterRules[{opts}, Options[SearchPattern]]], "RLE: ",
-    ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &];
+LifeFind[args__, opts : OptionsPattern[]] := 
+  If[# != {}, 
+     ArrayPlot[#, Mesh -> All, 
+        FilterRules[{opts}, Options[ArrayPlot]]] & /@ 
+      Echo[#, "RLE: ", 
+       ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &]] &[
+   SearchPattern[args, FilterRules[{opts}, Options[SearchPattern]]]];
 
 Options[ExportGIF] = 
   Join[{"Rule" :> $Rule, "DisplayDurations" -> 0.5}, 
