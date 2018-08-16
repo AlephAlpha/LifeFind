@@ -190,48 +190,49 @@ SearchPattern::nsat = "No such pattern.";
 SearchPattern::nsym = 
   "Invalid symmetry. The following symmetries are supported: \"C1\", \
 \"C2\", \"C4\", \"D2-\", \"D2\\\\\", \"D2|\", \"D2/\", \"D4+\", \"D4X\
-\", \"D8\"";
+\", \"D8\".";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1"};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, 0, 0, opts];
 SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] := 
-  Block[{b, r = RandomInteger[1, {x, y, p}], 
-    rule = RuleNumber[OptionValue["Rule"]]},
-   If[# == {}, Message[SearchPattern::nsat]; {}, 
-      Transpose[
-       Mod[r + ArrayReshape[Boole@#[[1]], {x, y, p}], 2], {2, 3, 
-        1}]] &@
+  Block[{rule = RuleNumber[OptionValue["Rule"]], 
+    r = RandomInteger[1, {x, y, p}], newrule, sym, b, br, result},
+   newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
+   sym = Evaluate@BooleanConvert[Switch[OptionValue["Symmetry"],
+        "C1", True,
+        "C2", b[##] \[Equivalent] b[x + 1 - #, y + 1 - #2, #3],
+        "C4", b[##] \[Equivalent] b[#2, x + 1 - #, #3],
+        "D2-", b[##] \[Equivalent] b[x + 1 - #, #2, #3],
+        "D2\\", b[##] \[Equivalent] b[#2, #, #3],
+        "D2|", b[##] \[Equivalent] b[#, y + 1 - #2, #3],
+        "D2/", b[##] \[Equivalent] b[y + 1 - #2, x + 1 - #, #3],
+        "D4+", 
+        b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent] 
+         b[#, y + 1 - #2, #3],
+        "D4X", 
+        b[##] \[Equivalent] b[#2, #, #3] \[Equivalent] 
+         b[y + 1 - #2, x + 1 - #, #3],
+        "D8", 
+        b[##] \[Equivalent] b[#2, x + 1 - #, #3] \[Equivalent] 
+         b[#2, #, #3],
+        _, Message[SearchPattern::nsym]; True], "CNF"] &;
+   b[i_, j_, 0] := b[i + dx, j + dy, p];
+   b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y := 
+    If[EvenQ@rule, False, EvenQ@t];
+   b[i_, j_, t_] := 
+    If[r[[i, j, t]] == 1, ! br[i, j, t], br[i, j, t]];
+   result = 
     SatisfiabilityInstances[
-     Array[BooleanConvert[Switch[OptionValue["Symmetry"],
-             "C1", True,
-             "C2", b[##] \[Equivalent] b[x + 1 - #, y + 1 - #2, #3],
-             "C4", b[##] \[Equivalent] b[#2, x + 1 - #, #3],
-             "D2-", b[##] \[Equivalent] b[x + 1 - #, #2, #3],
-             "D2\\", b[##] \[Equivalent] b[#2, #, #3],
-             "D2|", b[##] \[Equivalent] b[#, y + 1 - #2, #3],
-             "D2/", b[##] \[Equivalent] b[y + 1 - #2, x + 1 - #, #3],
-             "D4+", 
-             b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent] 
-              b[#, y + 1 - #2, #3],
-             "D4X", 
-             b[##] \[Equivalent] b[#2, #, #3] \[Equivalent] 
-              b[y + 1 - #2, x + 1 - #, #3],
-             "D8", 
-             b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent] 
-              b[#, y + 1 - #2, #3] \[Equivalent] b[#2, #, #3], _, 
-             Message[SearchPattern::nsym]; 
-             True] &&
-            (b[##] \[Equivalent] 
-              BooleanFunction[rule, 
-               Flatten@Array[b, {3, 3, 1}, {##} - 1]]) /. 
-           b[i_, j_, 0] :> b[i + dx, j + dy, p] /. 
-          b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :> 
-           If[EvenQ@rule, False, EvenQ@t] /. 
-         b[i_, j_, t_] /; r[[i, j, t]] == 1 :> ! b[i, j, t], 
-        "CNF"] &, {x + 2, y + 2, p}, {0, 0, 1}, And], 
-     Flatten@Array[b, {x, y, p}]]];
+     Array[sym[##] && 
+        BooleanFunction[newrule, 
+         Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
+      {x + 2, y + 2, p}, {0, 0, 1}, And], 
+     Flatten@Array[br, {x, y, p}]];
+   If[result == {}, Message[SearchPattern::nsat]; {},
+    Transpose[Mod[r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
+     {2, 3, 1}]]];
 
 Options[LifeFind] =
   Join[Options[SearchPattern],
