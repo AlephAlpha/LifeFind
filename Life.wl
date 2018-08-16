@@ -11,10 +11,10 @@ SearchPattern::usage =
   "SearchPattern[x, y, p, dx, dy] searches for a pattern with \
 bounding box (x, y), period p, and translating (dx, dy) for each \
 period. It returns a 0-1 array.";
-LifeFind::usage =
+LifeFind::usage = 
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
-returns a list of plots, and prints the RLE of the first phrase.";
+returns a list of plots, and prints the RLE of the first phase.";
 ExportGIF::usage = "ExportGIF[file, pattern, gen] generates plots of \
 the pattern, and exports it to a GIF file.";
 
