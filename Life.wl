@@ -187,16 +187,22 @@ FromAPGCode[apgcode_] :=
           d_ :> FromDigits@d]]]];
 
 SearchPattern::nsat = "No such pattern.";
+SearchPattern::nsym = 
+  "Invalid symmetry. The following symmetries are supported: \"C1\", \
+\"C2\", \"C4\", \"D2-\", \"D2\\\\\", \"D2|\", \"D2/\", \"D4+\", \"D4X\
+\", \"D8\"";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1"};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, 0, 0, opts];
 SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] := 
-  Block[{b, r = RandomInteger[1, {x, y, p}]}, 
+  Block[{b, r = RandomInteger[1, {x, y, p}], 
+    rule = RuleNumber[OptionValue["Rule"]]},
    If[# == {}, Message[SearchPattern::nsat]; {}, 
       Transpose[
-       Mod[r + ArrayReshape[Boole@#[[1]], {x, y, p}], 2], {2, 3, 1}]] &@
+       Mod[r + ArrayReshape[Boole@#[[1]], {x, y, p}], 2], {2, 3, 
+        1}]] &@
     SatisfiabilityInstances[
      Array[BooleanConvert[Switch[OptionValue["Symmetry"],
              "C1", True,
@@ -214,15 +220,16 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
               b[y + 1 - #2, x + 1 - #, #3],
              "D8", 
              b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent] 
-              b[#, y + 1 - #2, #3] \[Equivalent] b[#2, #, #3],
-             _, True] &&
+              b[#, y + 1 - #2, #3] \[Equivalent] b[#2, #, #3], _, 
+             Message[SearchPattern::nsym]; 
+             True] &&
             (b[##] \[Equivalent] 
-              BooleanFunction[RuleNumber[OptionValue["Rule"]], 
-               Flatten@Array[b, {3, 3, 1}, {##} - 1]]) /.
-           b[i_, j_, 0] :> b[i + dx, j + dy, p] /.
+              BooleanFunction[rule, 
+               Flatten@Array[b, {3, 3, 1}, {##} - 1]]) /. 
+           b[i_, j_, 0] :> b[i + dx, j + dy, p] /. 
           b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :> 
-           If[EvenQ@RuleNumber[OptionValue["Rule"]], False, EvenQ@t] /.
-                  b[i_, j_, t_] /; r[[i, j, t]] == 1 :> ! b[i, j, t], 
+           If[EvenQ@rule, False, EvenQ@t] /. 
+         b[i_, j_, t_] /; r[[i, j, t]] == 1 :> ! b[i, j, t], 
         "CNF"] &, {x + 2, y + 2, p}, {0, 0, 1}, And], 
      Flatten@Array[b, {x, y, p}]]];
 
