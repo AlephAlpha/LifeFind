@@ -1,7 +1,15 @@
 # LifeFind
 A simple and naïve Game of Life pattern searcher written in Wolfram Language.
 
-这是个 Mathematica 包。[安装](http://support.wolfram.com/kb/5648)了之后，在 Mathematica 中用以下命令来加载：
+---
+
+这是个用来搜索生命游戏（以及别的类生命游戏的元胞自动机）里的图样的 Mathematica 包。搜索方式是把图样要满足的条件看成一个 [SAT 问题](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem)，然后用 Mathematica 自带的 [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html) 函数求解。
+
+这个包就是写着玩的，搜索速度慢得离谱。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)，或者见[《生命游戏搜索程序汇总》](https://www.jianshu.com/p/81c90ba597ea)。
+
+---
+
+[安装](http://support.wolfram.com/kb/5648)了之后，在 Mathematica 中用以下命令来加载：
 
 ```Mathematica
 Needs["Life`"]
@@ -21,9 +29,11 @@ LifeFind[5, 16, 3, 1, 0]
 
 还可以设置 `"Rule"` 和 `"Symmetry"` 两个参数，来设定规则和对称性。
 
-目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持六边形的或者 [von Neumann 邻域](http://conwaylife.com/wiki/Von_Neumann_neighbourhood)的规则。
+目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持六边形的规则，也不支持后面加 `V` 表示冯·诺依曼邻域的写法。
 
 支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)，"D2" 和 "D4" 后面的符号代表它的对称轴。
+
+---
 
 除了 `SearchPattern` 和 `LifeFind`，这个包里还有以下几个函数：
 
@@ -35,4 +45,4 @@ LifeFind[5, 16, 3, 1, 0]
 
 这几个转换的函数都只支持两种状态的规则，也就是说，那个数组只有 0 和 1。
 
-这个包就是写着玩的，搜索速度慢得离谱。如果要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)，或者见[《生命游戏搜索程序汇总》](https://www.jianshu.com/p/81c90ba597ea)。
+此外还定义了一个符号 `$Rule`，表示全局的默认规则。它的默认值是 `"B3/S23"`（生命游戏）。可以更改它的值，这样使用别的函数的时候就不必再设置 `"Rule"` 参数。
