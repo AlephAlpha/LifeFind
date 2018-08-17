@@ -179,7 +179,7 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
      Array[sym[##] && 
         BooleanFunction[newrule, 
          Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
-      {x + 2, y + 2, p}, {0, 0, 1}, And], 
+      {x + 4, y + 4, p}, {-1, -1, 1}, And], 
      Flatten@Array[br, {x, y, p}]];
    If[result == {}, Message[SearchPattern::nsat]; {},
     Transpose[Mod[r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
