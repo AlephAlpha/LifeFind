@@ -3,7 +3,7 @@ A simple and naïve Game of Life pattern searcher written in Wolfram Language.
 
 ---
 
-这是个用来搜索生命游戏（以及别的类生命游戏的元胞自动机）里的图样的 Mathematica 包。搜索方式是把图样要满足的条件看成一个 [SAT 问题](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem)，然后用 Mathematica 自带的 [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html) 函数求解。
+这是个用来搜索生命游戏（以及别的 Life-like 的元胞自动机）里的图样的 Mathematica 包。搜索方式是把图样要满足的条件看成一个 [SAT 问题](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem)，然后用 Mathematica 自带的 [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html) 函数求解。
 
 这个包就是写着玩的，搜索速度慢得离谱。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)，或者见[《生命游戏搜索程序汇总》](https://www.jianshu.com/p/81c90ba597ea)。
 
@@ -40,7 +40,7 @@ LifeFind[5, 16, 3, 1, 0]
 * `RuleNumber`: 把一个规则转写成一个大数字，可以用在 Mathematica 的 [`CellularAutomaton`](https://reference.wolfram.com/language/ref/CellularAutomaton.html) 函数中。只支持前面说的那些规则。
 * `ToRLE`: 把一个数组转换成 RLE 格式。可以设置 `"Rule"` 参数。
 * `FromRLE`: 把 RLE 转换成一个数组。
-* `FromAPGCode`: 把 [apgcode](www.conwaylife.com/wiki/Apgcode) 转换成一个数组。
+* `FromAPGCode`: 把 [apgcode](http://www.conwaylife.com/wiki/Apgcode) 转换成一个数组。
 * `ExportGIF`: 把一个图样导出成 GIF 文件。用法是 `ExportGIF[file, pattern, gen]`，这里 `file`、`pattern`、`gen` 分别为要导出到的文件名、图样（一个数组）、绘制的代数。可以设置 `"Rule"` 和 `"DisplayDurations"` 两个参数。
 
 这几个转换的函数都只支持两种状态的规则，也就是说，那个数组只有 0 和 1。
