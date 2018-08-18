@@ -43,7 +43,7 @@ LifeFind[5, 16, 3, 1, 0]
 
 可以省略 `dx` 和 `dy`，此时默认 `dx` 和 `dy` 都是 0，也就是说搜索的是静物或者振荡子。如果连 `p` 也省略，则默认周期是 1，也就是说搜索的是静物。
 
-还可以设置 `"Rule"` 和 `"Symmetry"` 两个参数，来设定规则和对称性。
+还可以设置 `"Rule"` 和 `"Symmetry"` 两个选项，来设定规则和对称性。
 
 目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持六边形的规则，也不支持后面加 `V` 表示冯·诺依曼邻域的写法。
 
@@ -54,11 +54,10 @@ LifeFind[5, 16, 3, 1, 0]
 除了 `SearchPattern` 和 `LifeFind`，这个包里还有以下几个函数：
 
 * `RuleNumber`: 把一个规则转写成一个大数字，可以用在 Mathematica 的 [`CellularAutomaton`](https://reference.wolfram.com/language/ref/CellularAutomaton.html) 函数中。只支持前面说的那些规则。
-* `ToRLE`: 把一个数组转换成 RLE 格式。可以设置 `"Rule"` 参数。
-* `FromRLE`: 把 RLE 转换成一个数组。
-* `FromAPGCode`: 把 [apgcode](http://www.conwaylife.com/wiki/Apgcode) 转换成一个数组。
-* `ExportGIF`: 把一个图样导出成 GIF 文件。用法是 `ExportGIF[file, pattern, gen]`，这里 `file`、`pattern`、`gen` 分别为要导出到的文件名、图样（一个数组）、绘制的代数。可以设置 `"Rule"` 和 `"DisplayDurations"` 两个参数。
-
-这几个转换的函数都只支持两种状态的规则，也就是说，那个数组只有 0 和 1。
+* `ToRLE`: 把一个数组转换成 [RLE](http://www.conwaylife.com/wiki/Run_Length_Encoded) 格式。可以设置 `"Rule"` 选项。只支持两种状态的规则，也就是说，数组只能由 0 和 1 组成。
+* `FromRLE`: 把 RLE 转换成一个数组。只支持两种状态的规则。
+* `FromAPGCode`: 把 [apgcode](http://www.conwaylife.com/wiki/Apgcode) 转换成一个数组。只支持两种状态的规则。
+* `Parent`: 尝试搜索图样的[父母](http://www.conwaylife.com/wiki/Parent)。`Parent[pattern, m]` 表示在比原来的图样大 `m` 圈的范围内搜索；省略 `m` 时默认 `m` 是 0。搜索范围有限，搜不出结果不能说明这个图样是[伊甸园](http://www.conwaylife.com/wiki/Garden_of_Eden)。可以设置 `"Rule"` 选项。
+* `ExportGIF`: 把一个图样导出成 GIF 文件。用法是 `ExportGIF[file, pattern, gen]`，这里 `file`、`pattern`、`gen` 分别为要导出到的文件名、图样（一个数组）、绘制的代数。可以设置 `"Rule"` 和 `"DisplayDurations"` 两个选项。
 
 此外还定义了一个符号 `$Rule`，表示全局的默认规则。它的默认值是 `"B3/S23"`（生命游戏）。可以更改它的值，这样使用别的函数的时候就不必再设置 `"Rule"` 参数。

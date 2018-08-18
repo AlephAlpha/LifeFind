@@ -17,6 +17,13 @@ LifeFind::usage =
 returns a list of plots, and prints the RLE of the first phase.";
 ExportGIF::usage = "ExportGIF[file, pattern, gen] generates plots of \
 the pattern, and exports it to a GIF file.";
+ExportGIF::usage = 
+  "ExportGIF[file, pattern, n] plots the pattern for n generations \
+and export it to a GIF file.";
+Parent::usage = 
+  "Parent[pattern] tries to find a parent of the pattern.\n\
+Parent[pattern, m] pads the pattern with m 0s on each side before \
+searching for the parent.";
 
 Begin["`Private`"];
 
@@ -196,6 +203,24 @@ LifeFind[args__, opts : OptionsPattern[]] :=
       Echo[#, "RLE: ", 
        ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &]] &[
    SearchPattern[args, FilterRules[{opts}, Options[SearchPattern]]]];
+
+Parent::nsat = "Parent not found.";
+Options[Parent] = {"Rule" :> $Rule};
+Parent[pattern_, opt : OptionsPattern[]] := Parent[pattern, 0, opt];
+Parent[pattern_, m_, OptionsPattern[]] := 
+  Block[{rule = RuleNumber[OptionValue["Rule"]], newrule, newpattern, 
+    x, y, b, result}, 
+   newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
+   newpattern = ArrayPad[pattern, m + 1] /. {1 -> True, 0 -> False};
+   {x, y} = Dimensions@newpattern - 2;
+   b[i_, j_] /; i < 2 || j < 2 || i > x + 1 || j > y + 1 := False;
+   result = 
+    SatisfiabilityInstances[
+     Array[BooleanFunction[newrule, 
+        Flatten@{Array[b, {3, 3}, {##} - 1], newpattern[[##]]}, 
+        "CNF"] &, {x, y} + 2, 1, And], Flatten@Array[b, {x, y}, 2]];
+   If[result == {}, Message[Parent::nsat]; {}, 
+    ArrayReshape[Boole@result[[1]], {x, y}]]];
 
 Options[ExportGIF] = 
   Join[{"Rule" :> $Rule, "DisplayDurations" -> 0.5}, 
