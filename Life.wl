@@ -198,7 +198,7 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
 Options[LifeFind] =
   Join[Options[SearchPattern],
    Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
-LifeFind[x_, y_, args__, opts : OptionsPattern[]] :=
+LifeFind[x_, y_, args___, opts : OptionsPattern[]] :=
   If[# != {},
      ArrayPlot[#, FilterRules[{opts}, Options[ArrayPlot]],
         Mesh -> All] & /@
