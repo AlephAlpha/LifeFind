@@ -43,11 +43,13 @@ LifeFind[5, 16, 3, 1, 0]
 
 可以省略 `dx` 和 `dy`，此时默认 `dx` 和 `dy` 都是 0，也就是说搜索的是静物或者振荡子。如果连 `p` 也省略，则默认周期是 1，也就是说搜索的是静物。
 
-还可以设置 `"Rule"` 和 `"Symmetry"` 两个选项，来设定规则和对称性。
+还可以设置 `"Rule"`、`"Symmetry"`、`"Agar"` 三个选项。
 
-目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持六边形的规则，也不支持后面加 `V` 表示冯·诺依曼邻域的写法。
+`"Rule"` 表示搜索的规则。目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持六边形的规则，也不支持后面加 `V` 表示冯·诺依曼邻域的写法。
 
-支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)，"D2" 和 "D4" 后面的符号代表它的对称轴。
+`"Symmetry"` 表示搜索的对称性。支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)，"D2" 和 "D4" 后面的符号代表它的对称轴。
+
+`"Agar"` 选项默认为 `False`。当设为 `True` 时，搜索的是[琼脂](http://www.conwaylife.com/wiki/Agar)，而非有限的图样。
 
 ### 其他函数
 
@@ -60,4 +62,4 @@ LifeFind[5, 16, 3, 1, 0]
 * `Parent`: 尝试搜索图样的[父母](http://www.conwaylife.com/wiki/Parent)。`Parent[pattern, m]` 表示在比原来的图样大 `m` 圈的范围内搜索；省略 `m` 时默认 `m` 是 0。搜索范围有限，搜不出结果不能说明这个图样是[伊甸园](http://www.conwaylife.com/wiki/Garden_of_Eden)。可以设置 `"Rule"` 选项。
 * `ExportGIF`: 把一个图样导出成 GIF 文件。用法是 `ExportGIF[file, pattern, gen]`，这里 `file`、`pattern`、`gen` 分别为要导出到的文件名、图样（一个数组）、绘制的代数。可以设置 `"Rule"` 和 `"DisplayDurations"` 两个选项。
 
-此外还定义了一个符号 `$Rule`，表示全局的默认规则。它的默认值是 `"B3/S23"`（生命游戏）。可以更改它的值，这样使用别的函数的时候就不必再设置 `"Rule"` 参数。
+此外还定义了一个符号 `$Rule`，表示全局的默认规则。它的默认值是 `"B3/S23"`（生命游戏）。可以更改它的值，这样使用别的函数的时候就不必再设置 `"Rule"` 选项。

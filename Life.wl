@@ -11,16 +11,16 @@ SearchPattern::usage =
   "SearchPattern[x, y, p, dx, dy] searches for a pattern with \
 bounding box (x, y), period p, and translating (dx, dy) for each \
 period. It returns a 0-1 array.";
-LifeFind::usage = 
+LifeFind::usage =
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
 returns a list of plots, and prints the RLE of the first phase.";
 ExportGIF::usage = "ExportGIF[file, pattern, gen] generates plots of \
 the pattern, and exports it to a GIF file.";
-ExportGIF::usage = 
+ExportGIF::usage =
   "ExportGIF[file, pattern, n] plots the pattern for n generations \
 and export it to a GIF file.";
-Parent::usage = 
+Parent::usage =
   "Parent[pattern] tries to find a parent of the pattern.\n\
 Parent[pattern, m] pads the pattern with m 0s on each side before \
 searching for the parent.";
@@ -145,17 +145,18 @@ FromAPGCode[apgcode_] :=
           d_ :> FromDigits@d]]]];
 
 SearchPattern::nsat = "No such pattern.";
-SearchPattern::nsym = 
+SearchPattern::nsym =
   "Invalid symmetry. The following symmetries are supported: \"C1\", \
 \"C2\", \"C4\", \"D2-\", \"D2\\\\\", \"D2|\", \"D2/\", \"D4+\", \"D4X\
 \", \"D8\".";
-Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1"};
+Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1",
+   "Agar" -> False};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, 0, 0, opts];
-SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] := 
-  Block[{rule = RuleNumber[OptionValue["Rule"]], 
+SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
+  Block[{rule = RuleNumber[OptionValue["Rule"]],
     r = RandomInteger[1, {x, y, p}], newrule, sym, b, br, result},
    newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
    sym = Evaluate@BooleanConvert[Switch[OptionValue["Symmetry"],
@@ -166,72 +167,78 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
         "D2\\", b[##] \[Equivalent] b[#2, #, #3],
         "D2|", b[##] \[Equivalent] b[#, y + 1 - #2, #3],
         "D2/", b[##] \[Equivalent] b[y + 1 - #2, x + 1 - #, #3],
-        "D4+", 
-        b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent] 
+        "D4+",
+        b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent]
          b[#, y + 1 - #2, #3],
-        "D4X", 
-        b[##] \[Equivalent] b[#2, #, #3] \[Equivalent] 
+        "D4X",
+        b[##] \[Equivalent] b[#2, #, #3] \[Equivalent]
          b[y + 1 - #2, x + 1 - #, #3],
-        "D8", 
-        b[##] \[Equivalent] b[#2, x + 1 - #, #3] \[Equivalent] 
+        "D8",
+        b[##] \[Equivalent] b[#2, x + 1 - #, #3] \[Equivalent]
          b[#2, #, #3],
         _, Message[SearchPattern::nsym]; True], "CNF"] &;
    b[i_, j_, 0] := b[i + dx, j + dy, p];
-   b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y := 
-    If[EvenQ@rule, False, EvenQ@t];
-   b[i_, j_, t_] := 
+   b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :=
+     If[TrueQ@OptionValue["Agar"], b[Mod[i, x, 1], Mod[j, y, 1], t],
+      If[EvenQ@rule, False, EvenQ@t]];
+   b[i_, j_, t_] :=
     If[r[[i, j, t]] == 1, ! br[i, j, t], br[i, j, t]];
-   result = 
+   result =
     SatisfiabilityInstances[
-     Array[sym[##] && 
-        BooleanFunction[newrule, 
+     Array[sym[##] &&
+        BooleanFunction[newrule,
          Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
       {x + 2 + Abs@dx, y + 2 + Abs@dy, p},
-      {-Max[dx, 0], -Max[dy, 0], 1}, And], 
+      {-Max[dx, 0], -Max[dy, 0], 1}, And],
      Flatten@Array[br, {x, y, p}]];
-   If[result == {}, Message[SearchPattern::nsat]; {}, 
+   If[result == {}, Message[SearchPattern::nsat]; {},
     Transpose[Mod[r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
      {2, 3, 1}]]];
 
 Options[LifeFind] =
   Join[Options[SearchPattern],
    Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
-LifeFind[args__, opts : OptionsPattern[]] := 
-  If[# != {}, 
-     ArrayPlot[#, Mesh -> All, 
-        FilterRules[{opts}, Options[ArrayPlot]]] & /@ 
-      Echo[#, "RLE: ", 
-       ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &]] &[
-   SearchPattern[args, FilterRules[{opts}, Options[SearchPattern]]]];
+LifeFind[x_, y_, args__, opts : OptionsPattern[]] :=
+  If[# != {},
+     ArrayPlot[#, FilterRules[{opts}, Options[ArrayPlot]],
+        Mesh -> All] & /@
+      Echo[#, "RLE: ",
+       ToRLE[#[[1]],
+         "Rule" ->
+          OptionValue["Rule"] <>
+           If[TrueQ@OptionValue["Agar"],
+            ":T" <> ToString@y <> "," <> ToString@x, ""]] &]] &[
+   SearchPattern[x, y, args,
+    FilterRules[{opts}, Options[SearchPattern]]]];
 
 Parent::nsat = "Parent not found.";
 Options[Parent] = {"Rule" :> $Rule};
 Parent[pattern_, opt : OptionsPattern[]] := Parent[pattern, 0, opt];
-Parent[pattern_, m_, OptionsPattern[]] := 
-  Block[{rule = RuleNumber[OptionValue["Rule"]], newrule, newpattern, 
-    x, y, b, result}, 
+Parent[pattern_, m_, OptionsPattern[]] :=
+  Block[{rule = RuleNumber[OptionValue["Rule"]], newrule, newpattern,
+    x, y, b, result},
    newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
    newpattern = ArrayPad[pattern, m + 1] /. {1 -> True, 0 -> False};
    {x, y} = Dimensions@newpattern - 2;
    b[i_, j_] /; i < 2 || j < 2 || i > x + 1 || j > y + 1 := False;
-   result = 
+   result =
     SatisfiabilityInstances[
-     Array[BooleanFunction[newrule, 
-        Flatten@{Array[b, {3, 3}, {##} - 1], newpattern[[##]]}, 
+     Array[BooleanFunction[newrule,
+        Flatten@{Array[b, {3, 3}, {##} - 1], newpattern[[##]]},
         "CNF"] &, {x, y} + 2, 1, And], Flatten@Array[b, {x, y}, 2]];
-   If[result == {}, Message[Parent::nsat]; {}, 
+   If[result == {}, Message[Parent::nsat]; {},
     ArrayReshape[Boole@result[[1]], {x, y}]]];
 
-Options[ExportGIF] = 
-  Join[{"Rule" :> $Rule, "DisplayDurations" -> 0.5}, 
+Options[ExportGIF] =
+  Join[{"Rule" :> $Rule, "DisplayDurations" -> 0.5},
    Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
-ExportGIF[file_, pattern_, gen_, opts : OptionsPattern[]] := 
-  Export[file, 
-   ArrayPlot[#, Mesh -> All, 
-      FilterRules[{opts}, Options[ArrayPlot]]] & /@ 
-    CellularAutomaton[{RuleNumber@OptionValue["Rule"], 
-      2, {1, 1}}, {pattern, 0}, gen - 1], 
-   "DisplayDurations" -> OptionValue["DisplayDurations"], 
+ExportGIF[file_, pattern_, gen_, opts : OptionsPattern[]] :=
+  Export[file,
+   ArrayPlot[#, Mesh -> All,
+      FilterRules[{opts}, Options[ArrayPlot]]] & /@
+    CellularAutomaton[{RuleNumber@OptionValue["Rule"],
+      2, {1, 1}}, {pattern, 0}, gen - 1],
+   "DisplayDurations" -> OptionValue["DisplayDurations"],
    "AnimationRepetitions" -> Infinity];
 
 End[];
