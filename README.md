@@ -43,13 +43,15 @@ LifeFind[5, 16, 3, 1, 0]
 
 可以省略 `dx` 和 `dy`，此时默认 `dx` 和 `dy` 都是 0，也就是说搜索的是静物或者振荡子。如果连 `p` 也省略，则默认周期是 1，也就是说搜索的是静物。
 
-还可以设置 `"Rule"`、`"Symmetry"`、`"Agar"` 三个选项。
+还可以设置 `"Rule"`、`"Symmetry"`、`"Agar"`、`"Random"` 四个选项。
 
 `"Rule"` 表示搜索的规则。目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持六边形的规则，也不支持后面加 `V` 表示冯·诺依曼邻域的写法。
 
 `"Symmetry"` 表示搜索的对称性。支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)，"D2" 和 "D4" 后面的符号代表它的对称轴。
 
 `"Agar"` 选项默认为 `False`。当设为 `True` 时，搜索的是[琼脂](http://www.conwaylife.com/wiki/Agar)，而非有限的图样。
+
+`SearchPattern` 和 `LifeFind` 默认会返回随机的结果，这是通过搜索的时候给要搜索的数组异或上一个随机数组得到的。如果不需要随机的结果，可以把 `"Random"` 选项设成是 1，此时异或上的数组取成全部是 1；也可以把 `"Random"` 选项设成是 0，此时异或上的数组取成全部是 0，不过搜索结果一般也全是 0，不建议使用。
 
 ### 其他函数
 

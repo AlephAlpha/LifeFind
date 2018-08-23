@@ -131,18 +131,19 @@ FromRLE[rle_] :=
 
 FromAPGCode::napg = "Invalid apgcode.";
 FromAPGCode[apgcode_] :=
-  If[# == {}, Message[FromAPGCode::napg]; {}, #[[1]]] &[
-   StringCases[apgcode,
-    StartOfString ~~ "x" ~~ ___ ~~ "_" ~~ code : WordCharacter ... :>
-     Transpose[
-      Join @@ Reverse /@ IntegerDigits[#, 2, 5] & /@
-       Thread@PadRight@
-         StringCases[
-          StringSplit[
-           StringReplace[
-            code, {"y" ~~ d_ :> StringRepeat["0", 4 + FromDigits@d],
-             "w" -> "00", "x" -> "000"}], "z"],
-          d_ :> FromDigits@d]]]];
+ If[# == {},
+    Message[FromAPGCode::napg]; {}, #[[1]] /.
+     {a___, {0 ...} ...} :> {a}] &[
+  StringCases[apgcode,
+   StartOfString ~~ "x" ~~ ___ ~~ "_" ~~ code : WordCharacter ... :>
+    Transpose[
+     Join @@ Reverse /@ IntegerDigits[#, 2, 5] & /@
+      Thread@PadRight@
+        StringCases[
+         StringSplit[
+          StringReplace[
+           code, {"y" ~~ d_ :> StringRepeat["0", 4 + FromDigits@d],
+            "w" -> "00", "x" -> "000"}], "z"], d_ :> FromDigits@d]]]]
 
 SearchPattern::nsat = "No such pattern.";
 SearchPattern::nsym =
@@ -150,50 +151,54 @@ SearchPattern::nsym =
 \"C2\", \"C4\", \"D2-\", \"D2\\\\\", \"D2|\", \"D2/\", \"D4+\", \"D4X\
 \", \"D8\".";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1",
-   "Agar" -> False};
+   "Agar" -> False, "Random" -> 0.5};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, 0, 0, opts];
-SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
-  Block[{rule = RuleNumber[OptionValue["Rule"]],
-    r = RandomInteger[1, {x, y, p}], newrule, sym, b, br, result},
-   newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
-   sym = Evaluate@BooleanConvert[Switch[OptionValue["Symmetry"],
-        "C1", True,
-        "C2", b[##] \[Equivalent] b[x + 1 - #, y + 1 - #2, #3],
-        "C4", b[##] \[Equivalent] b[#2, x + 1 - #, #3],
-        "D2-", b[##] \[Equivalent] b[x + 1 - #, #2, #3],
-        "D2\\", b[##] \[Equivalent] b[#2, #, #3],
-        "D2|", b[##] \[Equivalent] b[#, y + 1 - #2, #3],
-        "D2/", b[##] \[Equivalent] b[y + 1 - #2, x + 1 - #, #3],
-        "D4+",
-        b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent]
-         b[#, y + 1 - #2, #3],
-        "D4X",
-        b[##] \[Equivalent] b[#2, #, #3] \[Equivalent]
-         b[y + 1 - #2, x + 1 - #, #3],
-        "D8",
-        b[##] \[Equivalent] b[#2, x + 1 - #, #3] \[Equivalent]
-         b[#2, #, #3],
-        _, Message[SearchPattern::nsym]; True], "CNF"] &;
-   b[i_, j_, 0] := b[i + dx, j + dy, p];
-   b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :=
-     If[TrueQ@OptionValue["Agar"], b[Mod[i, x, 1], Mod[j, y, 1], t],
-      If[EvenQ@rule, False, EvenQ@t]];
-   b[i_, j_, t_] :=
-    If[r[[i, j, t]] == 1, ! br[i, j, t], br[i, j, t]];
-   result =
-    SatisfiabilityInstances[
-     Array[sym[##] &&
-        BooleanFunction[newrule,
-         Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
-      {x + 2 + Abs@dx, y + 2 + Abs@dy, p},
-      {-Max[dx, 0], -Max[dy, 0], 1}, And],
-     Flatten@Array[br, {x, y, p}]];
-   If[result == {}, Message[SearchPattern::nsat]; {},
-    Transpose[Mod[r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
-     {2, 3, 1}]]];
+SearchPattern[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
+  SearchPattern[x, y, p, dx, 0, opts];
+  SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
+    Block[{rule = RuleNumber[OptionValue["Rule"]],
+      r = RandomChoice[{OptionValue["Random"],
+          1 - OptionValue["Random"]} -> {True, False}, {x, y, p}],
+      newrule, sym, b, br, result},
+     newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
+     sym = Evaluate@BooleanConvert[Switch[OptionValue["Symmetry"],
+          "C1", True,
+          "C2", b[##] \[Equivalent] b[x + 1 - #, y + 1 - #2, #3],
+          "C4", b[##] \[Equivalent] b[#2, x + 1 - #, #3],
+          "D2-", b[##] \[Equivalent] b[x + 1 - #, #2, #3],
+          "D2\\", b[##] \[Equivalent] b[#2, #, #3],
+          "D2|", b[##] \[Equivalent] b[#, y + 1 - #2, #3],
+          "D2/", b[##] \[Equivalent] b[y + 1 - #2, x + 1 - #, #3],
+          "D4+",
+          b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent]
+           b[#, y + 1 - #2, #3],
+          "D4X",
+          b[##] \[Equivalent] b[#2, #, #3] \[Equivalent]
+           b[y + 1 - #2, x + 1 - #, #3],
+          "D8",
+          b[##] \[Equivalent] b[#2, x + 1 - #, #3] \[Equivalent]
+           b[#2, #, #3],
+          _, Message[SearchPattern::nsym]; True], "CNF"] &;
+     b[i_, j_, 0] := b[i + dx, j + dy, p];
+     b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :=
+      If[TrueQ@OptionValue["Agar"], b[Mod[i, x, 1], Mod[j, y, 1], t],
+       If[EvenQ@rule, False, EvenQ@t]];
+     b[i_, j_, t_] := If[r[[i, j, t]], ! br[i, j, t], br[i, j, t]];
+     result =
+      SatisfiabilityInstances[
+       Array[sym[##] &&
+          BooleanFunction[newrule,
+           Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
+        {x + 2 + Abs@dx, y + 2 + Abs@dy, p},
+        {-Max[dx, 0], -Max[dy, 0], 1}, And],
+       Flatten@Array[br, {x, y, p}]];
+     If[result == {}, Message[SearchPattern::nsat]; {},
+      Transpose[
+       Mod[Boole@r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
+       {2, 3, 1}]]];
 
 Options[LifeFind] =
   Join[Options[SearchPattern],
