@@ -151,7 +151,7 @@ SearchPattern::nsym =
 \"C2\", \"C4\", \"D2-\", \"D2\\\\\", \"D2|\", \"D2/\", \"D4+\", \"D4X\
 \", \"D8\".";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1",
-   "Agar" -> False, "Random" -> 0.5};
+   "Agar" -> False, "RandomArray" -> 0.5};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
