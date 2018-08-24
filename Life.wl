@@ -2,7 +2,7 @@
 
 BeginPackage["Life`"];
 
-$Rule::usage = "The global rule.";
+$Rule::usage = "The default rule.";
 RuleNumber::usage = "Convert a rule string to a rule number.";
 ToRLE::usage = "Convert a 2d 0-1 array to a string of RLE format.";
 FromRLE::usage = "Convert a string of RLE format to an array.";
