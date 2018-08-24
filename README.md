@@ -5,11 +5,13 @@ A simple and naïve Game of Life pattern searcher written in Wolfram Language.
 
 这是个用来搜索生命游戏（以及别的 Life-like 的元胞自动机）里的图样的 Mathematica 包。搜索方式是把图样要满足的条件看成一个 [SAT 问题](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem)，然后用 Mathematica 自带的 [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html) 函数求解。
 
-这个包就是写着玩的，搜索速度慢得离谱。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)，或者见[《生命游戏搜索程序汇总》](https://www.jianshu.com/p/81c90ba597ea)。
+这个包就是写着玩的，搜索速度慢得离谱，完全无法搜索周期稍大的图样。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)，或者见[《生命游戏搜索程序汇总》](https://www.jianshu.com/p/81c90ba597ea)。
 
-### 下载与安装
+我不怎么懂编程，代码肯定有很多 bug。遇到问题欢迎来提 [issue](https://github.com/AlephAlpha/LifeFind/issues)。
 
-直接点 Github 页面右上角的那个绿色的按钮 “Clone or download”就能下载。也可以用 `git clone`：
+## 下载与安装
+
+直接点 Github 页面右上角的那个绿色的按钮 “Clone or download” 就能下载。也可以用 `git clone`：
 
 ```bash
 git clone https://github.com/AlephAlpha/LifeFind.git
@@ -29,7 +31,7 @@ Needs["Life`"]
 << Life`
 ```
 
-### 用法
+## 搜索图样
 
 ![截图](Screenshot.png)
 
@@ -51,7 +53,7 @@ LifeFind[5, 16, 3, 1, 0]
 
 * `"Symmetry"`：
 
-  表示搜索的对称性。支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)，"D2" 和 "D4" 后面的符号代表它的对称轴。
+  表示搜索的对称性。支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。对称性的前面两个字符代表图样的对称群，"Cn" 和 "Dn" 分别代表[循环群](https://en.wikipedia.org/wiki/Cyclic_group)和[二面体群](https://en.wikipedia.org/wiki/Dihedral_group)； "D2" 和 "D4" 后面的符号代表图样的对称轴。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)。
 
 * `"Agar"`：
 
@@ -65,13 +67,15 @@ LifeFind[5, 16, 3, 1, 0]
 
   `SearchPattern` 和 `LifeFind` 默认会返回随机的结果，这是通过搜索的时候给要搜索的数组异或上一个随机数组来实现的。如果不需要随机的结果，可以把此选项设成是 1，此时异或上的数组取成全部是 1；也可以把此选项设成是 0，此时异或上的数组取成全部是 0，不过搜索结果一般也全是 0，除非 `"Changing"` 设成是 `True`。
 
-### 其他函数
+如果搜索时间过长，可以用 `Alt+.` （在命令行界面是 `Ctrl+C`）来中断搜索。
+
+## 其他函数
 
 除了 `SearchPattern` 和 `LifeFind`，这个包里还有以下几个函数：
 
 * `RuleNumber`：
 
-  把一个规则转写成一个大数字，可以用在 Mathematica 的 [`CellularAutomaton`](https://reference.wolfram.com/language/ref/CellularAutomaton.html) 函数中。只支持前面说的那些规则。
+  把一个规则转写成一个大数字，可以用在 Mathematica 的 [`CellularAutomaton`](https://reference.wolfram.com/language/ref/CellularAutomaton.html) 函数中，比如说生命游戏（`B3/S23`）对应的规则在 Mathematica 中是 `{RuleNumber["B3/S23"], 2, {1, 1}}`。只支持前面说的那些规则。
 
 * `ToRLE`：
 
@@ -91,6 +95,6 @@ LifeFind[5, 16, 3, 1, 0]
 
 * `ExportGIF`：
 
-  把一个图样导出成 GIF 文件。用法是 `ExportGIF[file, pattern, gen]`，这里 `file`、`pattern`、`gen` 分别为要导出到的文件名、图样（一个数组）、绘制的代数。可以设置 `"Rule"` 和 `"DisplayDurations"` 两个选项。
+  把一个图样导出成 GIF 文件。用法是 `ExportGIF[file, pattern, gen]`，这里 `file`、`pattern`、`gen` 分别为要导出到的文件名、图样（一个数组）、绘制的代数。可以设置 `"Rule"` 和 `"DisplayDurations"` 两个选项，后者表示 GIF 每一帧的时长，单位为秒。
 
 此外还定义了一个符号 `$Rule`，表示全局的默认规则。它的默认值是 `"B3/S23"`（生命游戏）。可以更改它的值，这样使用别的函数的时候就不必再设置 `"Rule"` 选项。

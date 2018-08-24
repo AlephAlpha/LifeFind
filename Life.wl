@@ -15,15 +15,13 @@ LifeFind::usage =
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
 returns a list of plots, and prints the RLE of the first phase.";
-ExportGIF::usage = "ExportGIF[file, pattern, gen] generates plots of \
-the pattern, and exports it to a GIF file.";
-ExportGIF::usage =
-  "ExportGIF[file, pattern, n] plots the pattern for n generations \
-and export it to a GIF file.";
 Parent::usage =
   "Parent[pattern] tries to find a parent of the pattern.\n\
 Parent[pattern, m] pads the pattern with m 0s on each side before \
 searching for the parent.";
+ExportGIF::usage =
+  "ExportGIF[file, pattern, n] plots the pattern for n generations \
+and export it to a GIF file.";
 
 Begin["`Private`"];
 
