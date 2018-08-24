@@ -151,7 +151,7 @@ SearchPattern::nsym =
 \"C2\", \"C4\", \"D2-\", \"D2\\\\\", \"D2|\", \"D2/\", \"D4+\", \"D4X\
 \", \"D8\".";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1",
-   "Agar" -> False, "RandomArray" -> 0.5};
+   "Agar" -> False, "Changing" -> False, "RandomArray" -> 0.5};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
@@ -162,7 +162,7 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
   Block[{rule = RuleNumber[OptionValue["Rule"]],
     r = RandomChoice[{OptionValue["RandomArray"],
         1 - OptionValue["RandomArray"]} -> {True, False}, {x, y, p}],
-    newrule, sym, b, br, result},
+    newrule, sym, b, br, bc, result},
    newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
    sym = Evaluate@BooleanConvert[Switch[OptionValue["Symmetry"],
         "C1", True,
@@ -190,11 +190,15 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    result =
     SatisfiabilityInstances[
      Array[sym[##] &&
-        BooleanFunction[newrule,
-         Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
-      {x + 2 + Abs@dx, y + 2 + Abs@dy, p},
-      {-Max[dx, 0], -Max[dy, 0], 1}, And],
-     Flatten@Array[br, {x, y, p}]];
+         BooleanFunction[newrule,
+          Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
+       {x + 2 + Abs@dx, y + 2 + Abs@dy, p},
+       {-Max[dx, 0], -Max[dy, 0], 1}, And] &&
+      If[OptionValue["Changing"],
+       Array[BooleanConvert[
+           b[##, 0] \[Xor] b[##, 1] \[Equivalent] bc[##], "CNF"] &,
+         {x, y}, 1, And] && Array[bc, {3, 3}, 1, Or], True],
+     Flatten@{Array[br, {x, y, p}], Array[bc, {x, y}]}];
    If[result == {}, Message[SearchPattern::nsat]; {},
     Transpose[
      Mod[Boole@r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
