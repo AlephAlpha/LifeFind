@@ -104,7 +104,7 @@ RuleNumber[rule_String] :=
     IgnoreCase -> True]];
 
 Options[ToRLE] = {"Rule" :> $Rule};
-ToRLE[array_, OptionsPattern[]] :=
+ToRLE[array_List, OptionsPattern[]] :=
   "x = " <> #2 <> ", y = " <> #1 <> ", rule = " <>
       OptionValue["Rule"] <> "\n" & @@ ToString /@ Dimensions@array <>
     StringRiffle[
@@ -117,7 +117,7 @@ ToRLE[array_, OptionsPattern[]] :=
      l : (___ ~~ "o" | "b" | "$" | "!") /; StringLength@l <= 70],
     "\n"];
 
-FromRLE[rle_] :=
+FromRLE[rle_String] :=
   PadRight[StringCases[{"." | "b" -> 0, "o" | "O" | "*" -> 1}] /@
     StringSplit[
      StringReplace[
@@ -128,7 +128,7 @@ FromRLE[rle_] :=
      "$"]];
 
 FromAPGCode::napg = "Invalid apgcode.";
-FromAPGCode[apgcode_] :=
+FromAPGCode[apgcode_String] :=
  If[# == {},
     Message[FromAPGCode::napg]; {}, #[[1]] /.
      {a___, {0 ...} ...} :> {a}] &[
@@ -145,11 +145,12 @@ FromAPGCode[apgcode_] :=
 
 SearchPattern::nsat = "No such pattern.";
 SearchPattern::nsym =
-  "Invalid symmetry. The following symmetries are supported: \"C1\", \
-\"C2\", \"C4\", \"D2-\", \"D2\\\\\", \"D2|\", \"D2/\", \"D4+\", \"D4X\
-\", \"D8\".";
+  "Symmetry is not one of \"C1\", \"C2\", \"C4\", \"D2-\", \
+\"D2\\\\\", \"D2|\", \"D2/\", \"D4+\", \"D4X\", \"D8\"; using \"C1\" \
+instead.";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1",
-   "Agar" -> False, "Changing" -> False, "RandomArray" -> 0.5};
+   "Agar" -> False, "Changing" -> False, "RandomArray" -> 0.5,
+   "KnownCells" -> {}};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
@@ -159,7 +160,7 @@ SearchPattern[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
 SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
   Block[{rule = RuleNumber[OptionValue["Rule"]],
     r = RandomChoice[{OptionValue["RandomArray"],
-        1 - OptionValue["RandomArray"]} -> {True, False}, {x, y, p}],
+        1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}],
     newrule, sym, b, br, bc, result},
    newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
    sym = Evaluate@BooleanConvert[Switch[OptionValue["Symmetry"],
@@ -184,10 +185,16 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :=
     If[TrueQ@OptionValue["Agar"], b[Mod[i, x, 1], Mod[j, y, 1], t],
      If[EvenQ@rule, False, EvenQ@t]];
-   b[i_, j_, t_] := If[r[[i, j, t]], ! br[i, j, t], br[i, j, t]];
+   b[i_, j_, t_] :=
+    If[r[[i, j, t]] == 1, ! br[i, j, t], br[i, j, t]];
    result =
-    SatisfiabilityInstances[
-     Array[sym[##] &&
+    SatisfiabilityInstances[(MapIndexed[
+         Switch[#, 1, b @@ #2, 0, ! b @@ #2, _, True] &,
+         Transpose[
+          Switch[ArrayDepth@#, 3, #, 2, {#}, 1, {{#}}, _, {{{}}}] &@
+           OptionValue["KnownCells"], {3, 1, 2}], {3}] /.
+        List -> And) &&
+      Array[sym[##] &&
          BooleanFunction[newrule,
           Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
        {x + 2 + Abs@dx, y + 2 + Abs@dy, p},
@@ -198,8 +205,7 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
          {x, y}, 1, And] && Array[bc, {3, 3}, 1, Or], True],
      Flatten@{Array[br, {x, y, p}], Array[bc, {x, y}]}];
    If[result == {}, Message[SearchPattern::nsat]; {},
-    Transpose[
-     Mod[Boole@r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
+    Transpose[Mod[r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
      {2, 3, 1}]]];
 
 Options[LifeFind] =
