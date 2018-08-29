@@ -7,6 +7,8 @@ RuleNumber::usage = "Convert a rule string to a rule number.";
 ToRLE::usage = "Convert a 2d 0-1 array to a string of RLE format.";
 FromRLE::usage = "Convert a string of RLE format to an array.";
 FromAPGCode::usage = "Convert an apgcode to an array.";
+PlotAndPrintRLE::usage =
+  "Plot the pattern, and print the RLE of the first phase.";
 SearchPattern::usage =
   "SearchPattern[x, y, p, dx, dy] searches for a pattern with \
 bounding box (x, y), period p, and translating (dx, dy) for each \
@@ -30,6 +32,7 @@ $Rule = "B3/S23";
 RuleNumber::nrule = "`1` is not a valid rule. This package only \
 supports totalistic and isotropic non-totalistic Life-like cellular \
 automata for the Moore neighbourhood.";
+RuleNumber[n_Integer] := n;
 RuleNumber[rule_String] :=
   If[# == {}, Message[RuleNumber::nrule, rule]; -1, #[[1]]] &[
    StringCases[rule,
@@ -129,19 +132,29 @@ FromRLE[rle_String] :=
 
 FromAPGCode::napg = "Invalid apgcode.";
 FromAPGCode[apgcode_String] :=
- If[# == {},
-    Message[FromAPGCode::napg]; {}, #[[1]] /.
-     {a___, {0 ...} ...} :> {a}] &[
-  StringCases[apgcode,
-   StartOfString ~~ "x" ~~ ___ ~~ "_" ~~ code : WordCharacter ... :>
-    Transpose[
-     Join @@ Reverse /@ IntegerDigits[#, 2, 5] & /@
-      Thread@PadRight@
-        StringCases[
-         StringSplit[
-          StringReplace[
-           code, {"y" ~~ d_ :> StringRepeat["0", 4 + FromDigits@d],
-            "w" -> "00", "x" -> "000"}], "z"], d_ :> FromDigits@d]]]]
+  If[# == {},
+     Message[FromAPGCode::napg]; {}, #[[1]] /.
+      {a___, {0 ...} ...} :> {a}] &[
+   StringCases[apgcode,
+    StartOfString ~~ "x" ~~ ___ ~~ "_" ~~ code : WordCharacter ... :>
+     Transpose[
+      Join @@ Reverse /@ IntegerDigits[#, 2, 5] & /@
+       Thread@PadRight@
+         StringCases[
+          StringSplit[
+           StringReplace[
+            code, {"y" ~~ d_ :> StringRepeat["0", 4 + FromDigits@d],
+             "w" -> "00", "x" -> "000"}], "z"],
+          d_ :> FromDigits@d]]]];
+
+Options[PlotAndPrintRLE] =
+  Join[Options[ToRLE],
+   Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
+PlotAndPrintRLE[pattern_, opts : OptionsPattern[]] :=
+  ArrayPlot[#, FilterRules[{opts}, Options[ArrayPlot]],
+     Mesh -> All] & /@
+   Echo[pattern, "RLE: ",
+    ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &];
 
 SearchPattern::nsat = "No such pattern.";
 SearchPattern::nsym =
@@ -161,7 +174,7 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
   Block[{rule = RuleNumber[OptionValue["Rule"]],
     r = RandomChoice[{OptionValue["RandomArray"],
         1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}],
-    newrule, sym, b, br, bc, result},
+    newrule, sym, b, ax, ay, c, br, bc, result},
    newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
    sym = Evaluate@BooleanConvert[Switch[OptionValue["Symmetry"],
         "C1", True,
@@ -181,12 +194,29 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
         b[##] \[Equivalent] b[#2, x + 1 - #, #3] \[Equivalent]
          b[#2, #, #3],
         _, Message[SearchPattern::nsym]; True], "CNF"] &;
-   b[i_, j_, 0] := b[i + dx, j + dy, p];
-   b[i_, j_, t_] /; i < 1 || i > x || j < 1 || j > y :=
-    If[TrueQ@OptionValue["Agar"], b[Mod[i, x, 1], Mod[j, y, 1], t],
-     If[EvenQ@rule, False, EvenQ@t]];
+   ax[{a_, _}] := ax[a];
+   ax[True] = ax[0];
+   ax[a_Integer] :=
+    b[Mod[#1, x, 1], Mod[#2 + Quotient[#1, x, 1] a, y, 1], #3] &;
+   ax[_] = If[EvenQ@rule, False, EvenQ@#3] &;
+   ay[{_, a_}] := ay[a];
+   ay[True] = ay[0];
+   ay[a_Integer] :=
+    b[Mod[#1 + Quotient[#2, y, 1] a, x, 1], Mod[#2, y, 1], #3] &;
+   ay[_] = If[EvenQ@rule, False, EvenQ@#3] &;
+   b[i_, j_, t_] /; t < 1 || t > p :=
+    b[i - Quotient[t, p, 1] dx, j - Quotient[t, p, 1] dy,
+     Mod[t, p, 1]];
+   b[i_, j_, t_] /; i < 1 || i > x := ax[OptionValue["Agar"]][i, j, t];
+   b[i_, j_, t_] /; j < 1 || j > y := ay[OptionValue["Agar"]][i, j, t];
    b[i_, j_, t_] :=
     If[r[[i, j, t]] == 1, ! br[i, j, t], br[i, j, t]];
+   c[True] = c[{1, 2}];
+   c[{t1_, t2_}] :=
+    Array[BooleanConvert[
+        b[##, t1] \[Xor] b[##, t2] \[Equivalent] bc[##], "CNF"] &,
+      {x, y}, 1, And] && Array[bc, {x, y}, 1, Or];
+   c[_] := True;
    result =
     SatisfiabilityInstances[(MapIndexed[
          Switch[#, 1, b @@ #2, 0, ! b @@ #2, _, True] &,
@@ -199,30 +229,32 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
           Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
        {x + 2 + Abs@dx, y + 2 + Abs@dy, p},
        {-Max[dx, 0], -Max[dy, 0], 1}, And] &&
-      If[OptionValue["Changing"],
-       Array[BooleanConvert[
-           b[##, 0] \[Xor] b[##, 1] \[Equivalent] bc[##], "CNF"] &,
-         {x, y}, 1, And] && Array[bc, {3, 3}, 1, Or], True],
+      c[OptionValue["Changing"]],
      Flatten@{Array[br, {x, y, p}], Array[bc, {x, y}]}];
    If[result == {}, Message[SearchPattern::nsat]; {},
     Transpose[Mod[r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
      {2, 3, 1}]]];
 
 Options[LifeFind] =
-  Join[Options[SearchPattern],
-   Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
+  Union[Options[SearchPattern], Options[PlotAndPrintRLE]];
 LifeFind[x_, y_, args___, opts : OptionsPattern[]] :=
-  If[# != {},
-     ArrayPlot[#, FilterRules[{opts}, Options[ArrayPlot]],
-        Mesh -> All] & /@
-      Echo[#, "RLE: ",
-       ToRLE[#[[1]],
-         "Rule" ->
-          OptionValue["Rule"] <>
-           If[TrueQ@OptionValue["Agar"],
-            ":T" <> ToString@y <> "," <> ToString@x, ""]] &]] &[
-   SearchPattern[x, y, args,
-    FilterRules[{opts}, Options[SearchPattern]]]];
+  Block[{result, bounded},
+   result =
+    SearchPattern[x, y, args,
+     FilterRules[{opts}, Options[SearchPattern]]];
+   bounded[a_?AtomQ] := bounded[{a, a}];
+   bounded[{0 | True, 0 | True}] :=
+    ":T" <> ToString@y <> "," <> ToString@x;
+   bounded[{0 | True, a_Integer}] :=
+    ":T" <> ToString@y <> "," <> ToString@x <> If[a > 0, "+", ""] <>
+     ToString@a;
+   bounded[{a_Integer, 0 | True}] :=
+    ":T" <> ToString@y <> If[a > 0, "+", ""] <> ToString@a <> "," <>
+     ToString@x;
+   bounded[__] = "";
+   If[result != {},
+    PlotAndPrintRLE[result,
+     "Rule" -> OptionValue["Rule"] <> bounded[OptionValue["Agar"]]]]];
 
 Parent::nsat = "Parent not found.";
 Options[Parent] = {"Rule" :> $Rule};
