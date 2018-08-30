@@ -24,86 +24,95 @@ searching for the parent.";
 ExportGIF::usage =
   "ExportGIF[file, pattern, n] plots the pattern for n generations \
 and export it to a GIF file.";
+PossibleRules::usage =
+  "Give all possible rules of a pattern. The result is given in an \
+Association, where True (resp. False) means this term should (resp. \
+should not) appear in the rule.";
 
 Begin["`Private`"];
 
 $Rule = "B3/S23";
 
-RuleNumber::nrule = "`1` is not a valid rule. This package only \
-supports totalistic and isotropic non-totalistic Life-like cellular \
-automata for the Moore neighbourhood.";
+RuleB = <|"0" -> <|"c" -> {0}|>,
+   "1" -> <|"c" -> {1, 4, 64, 256},
+     "e" -> {2, 8, 32, 128}|>,
+   "2" -> <|"a" -> {3, 6, 9, 36, 72, 192, 288, 384},
+     "c" -> {5, 65, 260, 320},
+     "e" -> {10, 34, 136, 160},
+     "i" -> {40, 130},
+     "k" -> {12, 33, 66, 96, 129, 132, 258, 264},
+     "n" -> {68, 257}|>,
+   "3" -> <|"a" -> {11, 38, 200, 416},
+     "c" -> {69, 261, 321, 324},
+     "e" -> {42, 138, 162, 168},
+     "i" -> {7, 73, 292, 448},
+     "j" -> {14, 35, 74, 137, 164, 224, 290, 392},
+     "k" -> {98, 140, 161, 266},
+     "n" -> {13, 37, 67, 193, 262, 328, 352, 388},
+     "q" -> {70, 76, 100, 196, 259, 265, 289, 385},
+     "r" -> {41, 44, 104, 131, 134, 194, 296, 386},
+     "y" -> {97, 133, 268, 322}|>,
+   "4" -> <|"a" -> {15, 39, 75, 201, 294, 420, 456, 480},
+     "c" -> {325},
+     "e" -> {170},
+     "i" -> {45, 195, 360, 390},
+     "j" -> {106, 142, 163, 169, 172, 226, 298, 394},
+     "k" -> {99, 141, 165, 225, 270, 330, 354, 396},
+     "n" -> {71, 77, 263, 293, 329, 356, 449, 452},
+     "q" -> {102, 204, 267, 417},
+     "r" -> {43, 46, 139, 166, 202, 232, 418, 424},
+     "t" -> {105, 135, 300, 450},
+     "w" -> {78, 228, 291, 393},
+     "y" -> {101, 197, 269, 323, 326, 332, 353, 389},
+     "z" -> {108, 198, 297, 387}|>,
+   "5" -> <|"a" -> {79, 295, 457, 484},
+     "c" -> {171, 174, 234, 426},
+     "e" -> {327, 333, 357, 453},
+     "i" -> {47, 203, 422, 488},
+     "j" -> {103, 205, 271, 331, 358, 421, 460, 481},
+     "k" -> {229, 334, 355, 397},
+     "n" -> {107, 143, 167, 233, 302, 428, 458, 482},
+     "q" -> {110, 206, 230, 236, 299, 395, 419, 425},
+     "r" -> {109, 199, 301, 361, 364, 391, 451, 454},
+     "y" -> {173, 227, 362, 398}|>,
+   "6" -> <|"a" -> {111, 207, 303, 423, 459, 486, 489, 492},
+     "c" -> {175, 235, 430, 490},
+     "e" -> {335, 359, 461, 485},
+     "i" -> {365, 455},
+     "k" -> {231, 237, 363, 366, 399, 429, 462, 483},
+     "n" -> {238, 427}|>,
+   "7" -> <|"c" -> {239, 431, 491, 494},
+     "e" -> {367, 463, 487, 493}|>,
+   "8" -> <|"c" -> {495}|>|>;
+
+RuleS = RuleB + 16;
+
+RuleNumber::nrule =
+  "`1` is not a valid rule. This package only supports totalistic and \
+isotropic non-totalistic Life-like cellular automata for the Moore \
+neighbourhood. Using " <> $Rule <> " instead.";
 RuleNumber[n_Integer] := n;
 RuleNumber[rule_String] :=
-  If[# == {}, Message[RuleNumber::nrule, rule]; -1, #[[1]]] &[
+  If[# == {}, Message[RuleNumber::nrule, rule];
+     RuleNumber[$Rule], #[[1]]] &[
    StringCases[rule,
     StartOfString ~~ "b" ~~
-      b : (DigitCharacter ~~ ("-" | "") ~~
-          ("c" | "e" | "k" | "a" | "i" | "n" |
-             "y" | "q" | "j" | "r" | "t" | "w" | "z") ...) ... ~~
+      b : (DigitCharacter ~~ ("-" |
+            "") ~~ ("c" | "e" | "k" | "a" | "i" | "n" | "y" | "q" |
+             "j" | "r" | "t" | "w" | "z") ...) ... ~~
       "/" | "/s" | "s" ~~
-      s : (DigitCharacter ~~ ("-" | "") ~~
-          ("c" | "e" | "k" | "a" | "i" | "n" |
-             "y" | "q" | "j" | "r" | "t" | "w" | "z") ...) ... ~~
-      EndOfString :>
-     (Total[2^DeleteDuplicates@Flatten@{#, #2 + 16}] & @@
-       (StringCases[#,
-           KeyValueMap[
-            n : # ~~ h : ("-" | "") ~~
-               c : (Alternatives @@ Keys@#2) ... :>
-              #2 /@ Which[c == "", Keys@#2,
-                h == "-", Complement[Keys@#2, Characters@c],
-                True, Characters@c] &,
-            <|"0" -> <|"c" -> {0}|>,
-             "1" -> <|"c" -> {256, 4, 64, 1},
-               "e" -> {128, 2, 32, 8}|>,
-             "2" -> <|"c" -> {320, 5, 260, 65},
-               "e" -> {160, 34, 136, 10},
-               "k" -> {264, 12, 96, 258, 33, 132, 66, 129},
-               "a" -> {384, 6, 192, 288, 3, 36, 72, 9},
-               "i" -> {130, 40},
-               "n" -> {257, 68}|>,
-             "3" -> <|"c" -> {324, 261, 321, 69},
-               "e" -> {168, 42, 162, 138},
-               "k" -> {266, 140, 98, 161},
-               "a" -> {416, 38, 200, 11},
-               "i" -> {448, 7, 292, 73},
-               "n" -> {328, 13, 352, 262, 37, 388, 67, 193},
-               "y" -> {322, 133, 268, 97},
-               "q" -> {385, 70, 196, 289, 259, 100, 76, 265},
-               "j" -> {392, 14, 224, 290, 35, 164, 74, 137},
-               "r" -> {386, 134, 194, 296, 131, 44, 104, 41}|>,
-             "4" -> <|"c" -> {325},
-               "e" -> {170},
-               "k" -> {354, 165, 330, 396, 141, 270, 225, 99},
-               "a" -> {456, 15, 480, 294, 39, 420, 75, 201},
-               "i" -> {360, 45, 390, 195},
-               "n" -> {452, 263, 449, 356, 71, 293, 329, 77},
-               "y" -> {332, 269, 353, 326, 101, 389, 323, 197},
-               "q" -> {417, 102, 204, 267},
-               "j" -> {394, 142, 226, 298, 163, 172, 106, 169},
-               "r" -> {424, 46, 232, 418, 43, 166, 202, 139},
-               "t" -> {450, 135, 300, 105},
-               "w" -> {393, 78, 228, 291},
-               "z" -> {387, 198, 297, 108}|>,
-             "5" -> <|"c" -> {171, 234, 174, 426},
-               "e" -> {327, 453, 333, 357},
-               "k" -> {229, 355, 397, 334},
-               "a" -> {79, 457, 295, 484},
-               "i" -> {47, 488, 203, 422},
-               "n" -> {167, 482, 143, 233, 458, 107, 428, 302},
-               "y" -> {173, 362, 227, 398},
-               "q" -> {110, 425, 299, 206, 236, 395, 419, 230},
-               "j" -> {103, 481, 271, 205, 460, 331, 421, 358},
-               "r" -> {109, 361, 301, 199, 364, 451, 391, 454}|>,
-             "6" -> <|"c" -> {175, 490, 235, 430},
-               "e" -> {335, 461, 359, 485},
-               "k" -> {231, 483, 399, 237, 462, 363, 429, 366},
-               "a" -> {111, 489, 303, 207, 492, 459, 423, 486},
-               "i" -> {365, 455},
-               "n" -> {238, 427}|>,
-             "7" -> <|"c" -> {239, 491, 431, 494},
-               "e" -> {367, 493, 463, 487}|>,
-             "8" -> <|"c" -> {495}|>|>]] & /@ {b, s})),
+      s : (DigitCharacter ~~ ("-" |
+            "") ~~ ("c" | "e" | "k" | "a" | "i" | "n" | "y" | "q" |
+             "j" | "r" | "t" | "w" | "z") ...) ... ~~ EndOfString :>
+     Total[2^DeleteDuplicates@
+        Flatten@MapThread[
+          StringCases[#,
+            KeyValueMap[
+             n : # ~~ h : ("-" | "") ~~
+                c : (Alternatives @@ Keys@#2) ... :> #2 /@
+                Which[c == "", Keys@#2, h == "-",
+                 Complement[Keys@#2, Characters@c], True,
+                 Characters@c] &, #2]] &, {{b, s}, {RuleB, RuleS}}]],
     IgnoreCase -> True]];
 
 Options[ToRLE] = {"Rule" :> $Rule};
@@ -289,6 +298,22 @@ ExportGIF[file_, pattern_, gen_, opts : OptionsPattern[]] :=
       2, {1, 1}}, {pattern, 0}, gen - 1],
    "DisplayDurations" -> OptionValue["DisplayDurations"],
    "AnimationRepetitions" -> Infinity];
+
+PossibleRules::nrule = "No such rule.";
+Options[PossibleRules] := {"B0" -> False};
+PossibleRules[pattern_, OptionsPattern[]] :=
+  Check[KeyMap[# /. {h_, n : "0" | "8", "c"} :> {h, n} &]@
+    KeySort@Merge[
+      Flatten@BlockMap[
+        Position[<|"B" -> RuleB, "S" -> RuleS|>,
+            FromDigits[Flatten@#[[1]], 2]][[1, ;; 3, 1]] -> #[[2, 2,
+            2]] &, MapIndexed[
+         ArrayPad[#, 2,
+           If[OptionValue["B0"], 1/2 + (-1)^Tr@#2/2, 0]] &,
+         pattern], {2, 3, 3}, 1],
+      Switch[Union@#, {0}, False, {1}, True, _,
+        Message[PossibleRules::nrule]] &], Null,
+   PossibleRules::nrule];
 
 End[];
 
