@@ -8,7 +8,7 @@ ToRLE::usage = "Convert a 2d 0-1 array to a string of RLE format.";
 FromRLE::usage = "Convert a string of RLE format to an array.";
 FromAPGCode::usage = "Convert an apgcode to an array.";
 PlotAndPrintRLE::usage =
-  "Plot the pattern, and print the RLE of the first phase.";
+  "Plot the pattern, and print the RLE of the first generation.";
 SearchPattern::usage =
   "SearchPattern[x, y, p, dx, dy] searches for a pattern with \
 bounding box (x, y), period p, and translating (dx, dy) for each \
@@ -16,7 +16,7 @@ period. It returns a 0-1 array.";
 LifeFind::usage =
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
-returns a list of plots, and prints the RLE of the first phase.";
+returns a list of plots, and prints the RLE of the first generation.";
 Parent::usage =
   "Parent[pattern] tries to find a parent of the pattern.\n\
 Parent[pattern, m] pads the pattern with m 0s on each side before \
@@ -151,10 +151,14 @@ Options[PlotAndPrintRLE] =
   Join[Options[ToRLE],
    Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
 PlotAndPrintRLE[pattern_, opts : OptionsPattern[]] :=
-  ArrayPlot[#, FilterRules[{opts}, Options[ArrayPlot]],
-     Mesh -> All] & /@
-   Echo[pattern, "RLE: ",
-    ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &];
+  If[ArrayDepth@pattern == 2,
+   ArrayPlot[
+    Echo[pattern, "RLE: ", ToRLE[#, "Rule" -> OptionValue["Rule"]] &],
+     FilterRules[{opts}, Options[ArrayPlot]], Mesh -> All],
+   ArrayPlot[#, FilterRules[{opts}, Options[ArrayPlot]],
+      Mesh -> All] & /@
+    Echo[pattern, "RLE: ",
+     ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &]];
 
 SearchPattern::nsat = "No such pattern.";
 SearchPattern::nsym =
