@@ -37,7 +37,7 @@ Needs["Life`"]
 
 包里用来搜索图样的函数是 `SearchPattern` 和 `LifeFind`。用法都一样，区别在于 `SearchPattern` 输出的是一个数组，而 `LifeFind` 输出的是图片，还顺带打印出图样的 [RLE](http://www.conwaylife.com/wiki/Run_Length_Encoded)。
 
-`LifeFind[x, y, p, dx, dy]` 搜索的是大小不超过 `(x, y)`，周期为 `p`，每个周期平移 `(dx, dy)` 的图样。比如说，要搜索大小不超过 5×16，速度为 c/3 的竖直方向的飞船，只需要：
+`LifeFind[x, y, p, dx, dy]` 搜索的是大小不超过 `(x, y)`，周期为 `p`，每个周期平移 `(dx, dy)` 的图样。比如说，要搜索大小不超过 5×16，周期为 3，速度为 c/3 的竖直方向的飞船，只需要：
 
 ```Mathematica
 LifeFind[5, 16, 3, 1, 0]
@@ -71,7 +71,25 @@ LifeFind[5, 16, 3, 1, 0]
 
 #### `"KnownCells"`
 
-此选项用于指定已知的细胞，其值是一个三维数组，三个维度分别对应 `p`，`x`，`y`。数组中 `1` 代表已知的活细胞，`0` 代表已知的死细胞，其它的值代表未确定的细胞。比如说，`{{{1, _}, {_, 0}}}` 表示要搜索的图样第一代最左上方的细胞是 1，第二行第二列的细胞是 0。
+此选项用于指定已知的细胞，其值是一个三维数组，三个维度分别对应 `p`，`x`，`y`。数组中 `1` 代表已知的活细胞，`0` 代表已知的死细胞，其它的值代表未确定的细胞。比如说，`"KnownCells" -> {{{1, _}, {_, 0}}}` 表示要搜索的图样第一代最左上方的细胞是 1，第二行第二列的细胞是 0。
+
+#### `"OtherConditions"`
+
+此选项用于指定需要满足的其它条件。条件中用 `C[i, j, t]` 来表示 `(i, j)` 处的细胞的第 `t` 代。这个条件最好写成[合取范式](https://en.wikipedia.org/wiki/Conjunctive_normal_form)或者容易化成合取范式的形式。比如说，要找大小不超过 16×16 的周期 2 的[凤凰](http://www.conwaylife.com/wiki/Phoenix)，可以用：
+
+```Mathematica
+LifeFind[16, 16, 2,
+ "OtherConditions" ->
+  Array[! C[##, 1] || ! C[##, 2] &, {17, 17}, 1, And]]
+```
+
+再比如说，要找大小不超过 15×15，周期为 4，速度为 c/2 的 [glide symmetric](https://en.wikipedia.org/wiki/Glide_reflection) 的竖直方向的飞船，可以用：
+
+```Mathematica
+LifeFind[15, 15, 4, 2, 0,
+ "OtherConditions" ->
+  Array[C[##, 1] \[Equivalent] C[# + 1, 15 + 1 - #2, 3] &, {15, 15}, 1, And]]
+```
 
 ## 其他函数
 

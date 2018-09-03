@@ -176,7 +176,7 @@ SearchPattern::nsym =
 instead.";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1",
    "Agar" -> False, "Changing" -> False, "RandomArray" -> 0.5,
-   "KnownCells" -> {}};
+   "KnownCells" -> {}, "OtherConditions" -> True};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
@@ -227,8 +227,8 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    c[True] = c[{1, 2}];
    c[{t1_, t2_}] :=
     Array[BooleanConvert[
-        b[##, t1] \[Xor] b[##, t2] \[Equivalent] bc[##], "CNF"] &,
-      {x, y}, 1, And] && Array[bc, {x, y}, 1, Or];
+        b[##, t1] \[Xor] b[##, t2] \[Equivalent] bc[##], "CNF"] &, {x,
+        y}, 1, And] && Array[bc, {x, y}, 1, Or];
    c[_] := True;
    result =
     SatisfiabilityInstances[(MapIndexed[
@@ -237,13 +237,16 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
           Switch[ArrayDepth@#, 3, #, 2, {#}, 1, {{#}}, _, {{{}}}] &@
            OptionValue["KnownCells"], {3, 1, 2}], {3}] /.
         List -> And) &&
+      BooleanConvert[OptionValue["OtherConditions"] /. C -> b,
+       "CNF"] &&
       Array[sym[##] &&
          BooleanFunction[newrule,
           Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
        {x + 2 + Abs@dx, y + 2 + Abs@dy, p},
        {-Max[dx, 0], -Max[dy, 0], 1}, And] &&
       c[OptionValue["Changing"]],
-     Flatten@{Array[br, {x, y, p}], Array[bc, {x, y}]}];
+     Flatten@{Array[br, {x, y, p}], Array[bc, {x, y}]},
+     Method -> "SAT"];
    If[result == {}, Message[SearchPattern::nsat]; {},
     Transpose[Mod[r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
      {2, 3, 1}]]];
