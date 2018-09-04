@@ -119,9 +119,9 @@ LifeFind[15, 15, 4, 2, 0,
 
 画出一个图样，并打印出它的 RLE。图样以二维数组的形式输入。也可以输入一个二维数组的列表，列表中每个元素代表图样的一代，此时 `PlotAndPrintRLE` 会画出它的每一代，并打印第一代的 RLE。可以设置 `"Rule"` 选项。`LifeFind` 相当于 `PlotAndPrintRLE` 和 `SearchPattern` 的复合。
 
-#### `Parent`
+<!--- #### `Parent`
 
-尝试搜索图样的[父母](http://www.conwaylife.com/wiki/Parent)。`Parent[pattern, m]` 表示在比原来的图样大 `m` 圈的范围内搜索；省略 `m` 时默认 `m` 是 0。搜索范围有限，搜不出结果不能说明这个图样是[伊甸园](http://www.conwaylife.com/wiki/Garden_of_Eden)。可以设置 `"Rule"` 选项。
+尝试搜索图样的[父母](http://www.conwaylife.com/wiki/Parent)。`Parent[pattern, m]` 表示在比原来的图样大 `m` 圈的范围内搜索；省略 `m` 时默认 `m` 是 0。搜索范围有限，搜不出结果不能说明这个图样是[伊甸园](http://www.conwaylife.com/wiki/Garden_of_Eden)。可以设置 `"Rule"` 选项。--->
 
 #### `ExportGIF`
 

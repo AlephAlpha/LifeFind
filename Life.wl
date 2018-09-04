@@ -17,10 +17,10 @@ LifeFind::usage =
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
 returns a list of plots, and prints the RLE of the first generation.";
-Parent::usage =
+(* Parent::usage =
   "Parent[pattern] tries to find a parent of the pattern.\n\
 Parent[pattern, m] pads the pattern with m 0s on each side before \
-searching for the parent.";
+searching for the parent."; *)
 ExportGIF::usage =
   "ExportGIF[file, pattern, n] plots the pattern for n generations \
 and export it to a GIF file.";
@@ -196,7 +196,7 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    agarx[_] = If[OddQ@bf, False, EvenQ@#3] &;
    agary[{_, a_}] := agary[a];
    agary[True] = agary[0];
-   agary[a_Integer] := 
+   agary[a_Integer] :=
     c[Mod[#1 + Quotient[#2, y, 1] a, x, 1], Mod[#2, y, 1], #3] &;
    agary[_] = If[OddQ@bf, False, EvenQ@#3] &;
    random =
@@ -281,7 +281,7 @@ LifeFind[x_, y_, args___, opts : OptionsPattern[]] :=
     PlotAndPrintRLE[result,
      "Rule" -> OptionValue["Rule"] <> bounded[OptionValue["Agar"]]]]];
 
-Parent::nsat = "Parent not found.";
+(* Parent::nsat = "Parent not found.";
 Options[Parent] = {"Rule" :> $Rule};
 Parent[pattern_, opt : OptionsPattern[]] := Parent[pattern, 0, opt];
 Parent[pattern_, m_, OptionsPattern[]] :=
@@ -297,7 +297,7 @@ Parent[pattern_, m_, OptionsPattern[]] :=
         Flatten@{Array[b, {3, 3}, {##} - 1], newpattern[[##]]},
         "CNF"] &, {x, y} + 2, 1, And], Flatten@Array[b, {x, y}, 2]];
    If[result == {}, Message[Parent::nsat]; {},
-    ArrayReshape[Boole@result[[1]], {x, y}]]];
+    ArrayReshape[Boole@result[[1]], {x, y}]]]; *)
 
 Options[ExportGIF] =
   Join[{"Rule" :> $Rule, "DisplayDurations" -> 0.5},
