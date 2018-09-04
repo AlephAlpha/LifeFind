@@ -175,8 +175,9 @@ SearchPattern::nsym =
 \"D2\\\\\", \"D2|\", \"D2/\", \"D4+\", \"D4X\", \"D8\"; using \"C1\" \
 instead.";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1",
-   "Agar" -> False, "Changing" -> False, "RandomArray" -> 0.5,
-   "KnownCells" -> {}, "OtherConditions" -> True};
+   "Periodic" -> True, "Agar" -> False, "Changing" -> False,
+   "RandomArray" -> 0.5, "KnownCells" -> {},
+   "OtherConditions" -> True};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
 SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
@@ -184,71 +185,79 @@ SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
 SearchPattern[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, dx, 0, opts];
 SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
-  Block[{rule = RuleNumber[OptionValue["Rule"]],
-    r = RandomChoice[{OptionValue["RandomArray"],
-        1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}],
-    newrule, sym, b, ax, ay, c, br, bc, result},
-   newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
-   sym = Evaluate@BooleanConvert[Switch[OptionValue["Symmetry"],
-        "C1", True,
-        "C2", b[##] \[Equivalent] b[x + 1 - #, y + 1 - #2, #3],
-        "C4", b[##] \[Equivalent] b[#2, x + 1 - #, #3],
-        "D2-", b[##] \[Equivalent] b[x + 1 - #, #2, #3],
-        "D2\\", b[##] \[Equivalent] b[#2, #, #3],
-        "D2|", b[##] \[Equivalent] b[#, y + 1 - #2, #3],
-        "D2/", b[##] \[Equivalent] b[y + 1 - #2, x + 1 - #, #3],
-        "D4+",
-        b[##] \[Equivalent] b[x + 1 - #, #2, #3] \[Equivalent]
-         b[#, y + 1 - #2, #3],
-        "D4X",
-        b[##] \[Equivalent] b[#2, #, #3] \[Equivalent]
-         b[y + 1 - #2, x + 1 - #, #3],
-        "D8",
-        b[##] \[Equivalent] b[#2, x + 1 - #, #3] \[Equivalent]
-         b[#2, #, #3],
-        _, Message[SearchPattern::nsym]; True], "CNF"] &;
-   ax[{a_, _}] := ax[a];
-   ax[True] = ax[0];
-   ax[a_Integer] :=
-    b[Mod[#1, x, 1], Mod[#2 + Quotient[#1, x, 1] a, y, 1], #3] &;
-   ax[_] = If[EvenQ@rule, False, EvenQ@#3] &;
-   ay[{_, a_}] := ay[a];
-   ay[True] = ay[0];
-   ay[a_Integer] :=
-    b[Mod[#1 + Quotient[#2, y, 1] a, x, 1], Mod[#2, y, 1], #3] &;
-   ay[_] = If[EvenQ@rule, False, EvenQ@#3] &;
-   b[i_, j_, t_] /; t < 1 || t > p :=
-    b[i - Quotient[t, p, 1] dx, j - Quotient[t, p, 1] dy,
+  Block[{bf, random, c, vcell, vchange, agarx, agary, rule, change,
+    known, sym, other, result},
+   bf = FromDigits[
+     IntegerDigits[RuleNumber[OptionValue["Rule"]], 2, 512] + 1, 4];
+   agarx[{a_, _}] := agarx[a];
+   agarx[True] = agarx[0];
+   agarx[a_Integer] :=
+    c[Mod[#1, x, 1], Mod[#2 + Quotient[#1, x, 1] a, y, 1], #3] &;
+   agarx[_] = If[OddQ@bf, False, EvenQ@#3] &;
+   agary[{_, a_}] := agary[a];
+   agary[True] = agary[0];
+   agary[a_Integer] := 
+    c[Mod[#1 + Quotient[#2, y, 1] a, x, 1], Mod[#2, y, 1], #3] &;
+   agary[_] = If[OddQ@bf, False, EvenQ@#3] &;
+   random =
+    RandomChoice[{OptionValue["RandomArray"],
+       1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}];
+   c[i_, j_, t_] /; t < 1 || t > p :=
+    c[i - Quotient[t, p, 1] dx, j - Quotient[t, p, 1] dy,
      Mod[t, p, 1]];
-   b[i_, j_, t_] /; i < 1 || i > x := ax[OptionValue["Agar"]][i, j, t];
-   b[i_, j_, t_] /; j < 1 || j > y := ay[OptionValue["Agar"]][i, j, t];
-   b[i_, j_, t_] :=
-    If[r[[i, j, t]] == 1, ! br[i, j, t], br[i, j, t]];
-   c[True] = c[{1, 2}];
-   c[{t1_, t2_}] :=
+   c[i_, j_, t_] /; i < 1 || i > x :=
+    agarx[OptionValue["Agar"]][i, j, t];
+   c[i_, j_, t_] /; j < 1 || j > y :=
+    agary[OptionValue["Agar"]][i, j, t];
+   c[i_, j_, t_] :=
+    If[random[[i, j, t]] == 1, ! vcell[i, j, t], vcell[i, j, t]];
+   rule =
+    Array[BooleanFunction[bf,
+       Flatten@{Array[c, {3, 3, 1}, {##} - 1], c[##]}, "CNF"] &,
+     {x + 2 + Abs@dx, y + 2 + Abs@dy,
+      If[OptionValue["Periodic"], p, p - 1]},
+     {-Max[dx, 0], -Max[dy, 0], If[OptionValue["Periodic"], 1, 2]},
+     And];
+   change[True] = change[{1, 2}];
+   change[{t1_, t2_}] :=
     Array[BooleanConvert[
-        b[##, t1] \[Xor] b[##, t2] \[Equivalent] bc[##], "CNF"] &, {x,
-        y}, 1, And] && Array[bc, {x, y}, 1, Or];
-   c[_] := True;
+        c[##, t1] \[Xor] c[##, t2] \[Equivalent] vchange[##], "CNF"] &,
+      {x, y}, 1, And] && Array[vchange, {x, y}, 1, Or];
+   change[_] := True;
+   known =
+    MapIndexed[Switch[#, 1, c @@ #2, 0, ! c @@ #2, _, True] &,
+      Transpose[
+       Switch[ArrayDepth@#, 3, #, 2, {#}, 1, {{#}}, _, {{{}}}] &@
+        OptionValue["KnownCells"], {3, 1, 2}], {3}] /. List -> And;
+   sym = Array[BooleanConvert[Switch[OptionValue["Symmetry"],
+        "C1", True,
+        "C2", c[##] \[Equivalent] c[x + 1 - #, y + 1 - #2, #3],
+        "C4", c[##] \[Equivalent] c[#2, x + 1 - #, #3],
+        "D2-", c[##] \[Equivalent] c[x + 1 - #, #2, #3],
+        "D2\\", c[##] \[Equivalent] c[#2, #, #3],
+        "D2|", c[##] \[Equivalent] c[#, y + 1 - #2, #3],
+        "D2/", c[##] \[Equivalent] c[y + 1 - #2, x + 1 - #, #3],
+        "D4+",
+        c[##] \[Equivalent] c[x + 1 - #, #2, #3] \[Equivalent]
+         c[#, y + 1 - #2, #3],
+        "D4X",
+        c[##] \[Equivalent] c[#2, #, #3] \[Equivalent]
+         c[y + 1 - #2, x + 1 - #, #3],
+        "D8",
+        c[##] \[Equivalent] c[#2, x + 1 - #, #3] \[Equivalent]
+         c[#2, #, #3],
+        _, Message[SearchPattern::nsym]; True], "CNF"] &,
+     {x, y, p}, 1, And];
+   other =
+    BooleanConvert[OptionValue["OtherConditions"] /. C -> c, "CNF"];
    result =
-    SatisfiabilityInstances[(MapIndexed[
-         Switch[#, 1, b @@ #2, 0, ! b @@ #2, _, True] &,
-         Transpose[
-          Switch[ArrayDepth@#, 3, #, 2, {#}, 1, {{#}}, _, {{{}}}] &@
-           OptionValue["KnownCells"], {3, 1, 2}], {3}] /.
-        List -> And) &&
-      BooleanConvert[OptionValue["OtherConditions"] /. C -> b,
-       "CNF"] &&
-      Array[sym[##] &&
-         BooleanFunction[newrule,
-          Flatten@{Array[b, {3, 3, 1}, {##} - 1], b[##]}, "CNF"] &,
-       {x + 2 + Abs@dx, y + 2 + Abs@dy, p},
-       {-Max[dx, 0], -Max[dy, 0], 1}, And] &&
-      c[OptionValue["Changing"]],
-     Flatten@{Array[br, {x, y, p}], Array[bc, {x, y}]},
+    SatisfiabilityInstances[
+     known && sym && other && rule && change[OptionValue["Changing"]],
+      Flatten@{Array[vcell, {x, y, p}], Array[vchange, {x, y}]},
      Method -> "SAT"];
    If[result == {}, Message[SearchPattern::nsat]; {},
-    Transpose[Mod[r + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
+    Transpose[
+     Mod[random + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
      {2, 3, 1}]]];
 
 Options[LifeFind] =
