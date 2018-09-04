@@ -3,6 +3,10 @@ A simple and naïve Game of Life pattern searcher written in Wolfram Language.
 
 ---
 
+[English version of this file translated by Google.](README_en.md)
+
+---
+
 这是个用来搜索生命游戏（以及别的 Life-like 的元胞自动机）里的图样的 Mathematica 包。搜索方式是把图样要满足的条件看成一个 [SAT 问题](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem)，然后用 Mathematica 自带的 [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html) 函数求解。
 
 这个包就是写着玩的，搜索速度慢得离谱，完全无法搜索周期稍大的图样。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)，或者见[《生命游戏搜索程序汇总》](https://www.jianshu.com/p/81c90ba597ea)。
@@ -129,7 +133,7 @@ LifeFind[17, 17, 4, 2, 0,
 
 #### `PossibleRules`
 
-给出一个图样（作为一个三维数组），给出它所满足的所有规则。结果以一个[关联列表](https://reference.wolfram.com/language/ref/Association.html)的形式给出，其中 `True` 和 `False` 分别表示规则中必须有/没有这一项。比如说，`<|{"B", "0"} -> False, {"B", "3", "a"} -> True, {"S", "4", "k"} -> False|>` 表示规则中必须有 `B3a`，不能有 `B0` 和 `S4k`，其它的项则可有可无。暂不支持自动判断是不是 `B0` 的规则；如果是 `B0` 的规则，需手动设置选项 `"B0" -> True`。
+输入一个图样（作为一个三维数组），给出它所满足的所有规则。结果以一个[关联列表](https://reference.wolfram.com/language/ref/Association.html)的形式给出，其中 `True` 和 `False` 分别表示规则中必须有/没有这一项。比如说，`<|{"B", "0"} -> False, {"B", "3", "a"} -> True, {"S", "4", "k"} -> False|>` 表示规则中必须有 `B3a`，不能有 `B0` 和 `S4k`，其它的项则可有可无。暂不支持自动判断是不是 `B0` 的规则；如果是 `B0` 的规则，需手动设置选项 `"B0" -> True`。
 
 #### `$Rule`
 
