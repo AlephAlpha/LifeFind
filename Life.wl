@@ -17,10 +17,9 @@ LifeFind::usage =
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
 returns a list of plots, and prints the RLE of the first generation.";
-(* Parent::usage =
-  "Parent[pattern] tries to find a parent of the pattern.\n\
-Parent[pattern, m] pads the pattern with m 0s on each side before \
-searching for the parent."; *)
+Predecessor::usage =
+  "Predecessor[pattern, n] tries to find a predecessor of n \
+generations of the pattern.";
 ExportGIF::usage =
   "ExportGIF[file, pattern, n] plots the pattern for n generations \
 and export it to a GIF file.";
@@ -227,8 +226,9 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    known =
     MapIndexed[Switch[#, 1, c @@ #2, 0, ! c @@ #2, _, True] &,
       Transpose[
-       Switch[ArrayDepth@#, 3, #, 2, {#}, 1, {{#}}, _, {{{}}}] &@
-        OptionValue["KnownCells"], {3, 1, 2}], {3}] /. List -> And;
+       Switch[ArrayDepth@#, 3, #, 2, {#}, 1, {{#}}, _, {{{}}}] &[
+        PadRight[1 + OptionValue["KnownCells"]] - 1],
+       {3, 1, 2}], {3}] /. List -> And;
    sym = Array[BooleanConvert[Switch[OptionValue["Symmetry"],
         "C1", True,
         "C2", c[##] \[Equivalent] c[x + 1 - #, y + 1 - #2, #3],
@@ -281,23 +281,14 @@ LifeFind[x_, y_, args___, opts : OptionsPattern[]] :=
     PlotAndPrintRLE[result,
      "Rule" -> OptionValue["Rule"] <> bounded[OptionValue["Agar"]]]]];
 
-(* Parent::nsat = "Parent not found.";
-Options[Parent] = {"Rule" :> $Rule};
-Parent[pattern_, opt : OptionsPattern[]] := Parent[pattern, 0, opt];
-Parent[pattern_, m_, OptionsPattern[]] :=
-  Block[{rule = RuleNumber[OptionValue["Rule"]], newrule, newpattern,
-    x, y, b, result},
-   newrule = FromDigits[IntegerDigits[rule, 2, 512] + 1, 4];
-   newpattern = ArrayPad[pattern, m + 1] /. {1 -> True, 0 -> False};
-   {x, y} = Dimensions@newpattern - 2;
-   b[i_, j_] /; i < 2 || j < 2 || i > x + 1 || j > y + 1 := False;
-   result =
-    SatisfiabilityInstances[
-     Array[BooleanFunction[newrule,
-        Flatten@{Array[b, {3, 3}, {##} - 1], newpattern[[##]]},
-        "CNF"] &, {x, y} + 2, 1, And], Flatten@Array[b, {x, y}, 2]];
-   If[result == {}, Message[Parent::nsat]; {},
-    ArrayReshape[Boole@result[[1]], {x, y}]]]; *)
+Options[Predecessor] =
+  FilterRules[Options[SearchPattern], Except["Periodic"]];
+Predecessor[pattern_, opt : OptionsPattern[]] :=
+  Predecessor[pattern, 1, opt];
+Predecessor[pattern_, n_, opt : OptionsPattern[]] :=
+  SearchPattern[Dimensions[pattern][[1]], Dimensions[pattern][[2]],
+   n + 1, "Periodic" -> False, opt,
+   "KnownCells" -> Append[ConstantArray[{}, n], pattern]];
 
 Options[ExportGIF] =
   Join[{"Rule" :> $Rule, "DisplayDurations" -> 0.5},

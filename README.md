@@ -87,12 +87,12 @@ LifeFind[16, 16, 2,
   Array[! C[##, 1] || ! C[##, 2] &, {17, 17}, 1, And]]
 ```
 
-再比如说，要找大小不超过 15×15，周期为 4，速度为 c/2 的 [glide symmetric](https://en.wikipedia.org/wiki/Glide_reflection) 的竖直方向的飞船，可以用：
+再比如说，要找大小不超过 17×17，周期为 4，速度为 c/2 的 [glide symmetric](https://en.wikipedia.org/wiki/Glide_reflection) 的竖直方向的飞船，可以用：
 
 ```Mathematica
-LifeFind[15, 15, 4, 2, 0,
+LifeFind[17, 17, 4, 2, 0,
  "OtherConditions" ->
-  Array[C[##, 1] \[Equivalent] C[# + 1, 15 + 1 - #2, 3] &, {15, 15}, 1, And]]
+  Array[C[##, 1] \[Equivalent] C[# + 1, 17 + 1 - #2, 3] &, {17, 17}, 1, And]]
 ```
 
 ## 其他函数
@@ -119,9 +119,9 @@ LifeFind[15, 15, 4, 2, 0,
 
 画出一个图样，并打印出它的 RLE。图样以二维数组的形式输入。也可以输入一个二维数组的列表，列表中每个元素代表图样的一代，此时 `PlotAndPrintRLE` 会画出它的每一代，并打印第一代的 RLE。可以设置 `"Rule"` 选项。`LifeFind` 相当于 `PlotAndPrintRLE` 和 `SearchPattern` 的复合。
 
-<!--- #### `Parent`
+#### `Predecessor`
 
-尝试搜索图样的[父母](http://www.conwaylife.com/wiki/Parent)。`Parent[pattern, m]` 表示在比原来的图样大 `m` 圈的范围内搜索；省略 `m` 时默认 `m` 是 0。搜索范围有限，搜不出结果不能说明这个图样是[伊甸园](http://www.conwaylife.com/wiki/Garden_of_Eden)。可以设置 `"Rule"` 选项。--->
+尝试搜索图样的[祖先](http://www.conwaylife.com/wiki/Predecessor)。`Predecessor[pattern, n]` 表示搜索第 `n` 代的祖先。不指定 `n` 时，`n` 默认是 1，也就是说，搜的是[父母](http://www.conwaylife.com/wiki/Parent)。搜索范围有限，搜不出结果不能说明这个图样是[伊甸园](http://www.conwaylife.com/wiki/Garden_of_Eden)。可以设置 `"Rule"` 选项。
 
 #### `ExportGIF`
 
