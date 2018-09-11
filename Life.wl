@@ -136,7 +136,7 @@ FromRLE[rle_String] :=
        rle, (StartOfLine ~~ ("x" | "#") ~~ Shortest@___ ~~
           EndOfLine) | "\n" | ("!" ~~ ___)],
       n : DigitCharacter .. ~~ a_ :> StringRepeat[a, FromDigits@n]],
-     "$"]];
+     "$", All]];
 
 FromAPGCode::napg = "Invalid apgcode.";
 FromAPGCode[apgcode_String] :=
