@@ -118,7 +118,6 @@ RuleNumber[rule_String] :=
     IgnoreCase -> True]];
 
 Options[ToRLE] = {"Rule" :> $Rule};
-Options[ToRLE] = {"Rule" :> $Rule};
 ToRLE[array_List, OptionsPattern[]] :=
   "x = " <> #2 <> ", y = " <> #1 <> ", rule = " <>
       OptionValue["Rule"] <> "\n" & @@ ToString /@ Dimensions@array <>
@@ -126,8 +125,9 @@ ToRLE[array_List, OptionsPattern[]] :=
     StringCases[
      StringReplace[
       StringReplace[
-       StringReplace[Riffle[# /. {1 -> "o", 0 -> "b"}, "$"] <> "!",
-        "b" .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"], 
+       StringReplace[
+        Riffle[array /. {1 -> "o", 0 -> "b"}, "$"] <> "!",
+        "b" .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"],
       r : (x_) .. /; StringLength@r > 1 :>
        ToString@StringLength@r <> x],
      l : (___ ~~ "o" | "b" | "$" | "!") /; StringLength@l <= 70],
