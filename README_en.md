@@ -88,7 +88,7 @@ This option is used to specify additional conditions that need to be met. In the
 ```Mathematica
 LifeFind[16, 16, 2,
  "OtherConditions" ->
-  Array[! C[##, 1] || ! C[##, 2] &, {17, 17}, 1, And]]
+  Array[! C[##, 1] || ! C[##, 2] &, {16, 16}, 1, And]]
 ```
 
 For example, to find a vertical [glide symmetric](https://en.wikipedia.org/wiki/Glide_reflection) spaceship with a size of no more than 17×17, a period of 4, and a speed of c/2, you can use:
@@ -131,7 +131,7 @@ Try searching for the [predecessor](http://www.conwaylife.com/wiki/Predecessor) 
 
 Export a pattern as a GIF file. The usage is `ExportGIF[file, pattern, gen]`, where `file`, `pattern`, `gen` are the file names, patterns (as an array), and the number of generations to be exported. You can set the `"Rule"` and `"DisplayDurations"` options, which represent the duration of each frame of the GIF, in seconds.
 
-#### `PossibleRules`
+#### `Rules`
 
 Given a pattern (as a three-dimensional array), gives all the rules it satisfies. The result is given in the form of an [association list](https://reference.wolfram.com/language/ref/Association.html), where `True` and `False` indicate that there must / cannot be this item in the rule. For example, `<|{"B", "0"} -> False, {"B", "3", "a"} -> True, {"S", "4", "k"} - > False|>` means that there must be `B3a` in the rule, there cannot be `B0` and `S4k`, and other items are optional. It is not supported to automatically determine whether it is a rule of `B0`; if it is a rule of `B0`, you need to manually set the option `"B0" -> True`.
 

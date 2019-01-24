@@ -88,7 +88,7 @@ LifeFind[5, 16, 3, 1, 0]
 ```Mathematica
 LifeFind[16, 16, 2,
  "OtherConditions" ->
-  Array[! C[##, 1] || ! C[##, 2] &, {17, 17}, 1, And]]
+  Array[! C[##, 1] || ! C[##, 2] &, {16, 16}, 1, And]]
 ```
 
 再比如说，要找大小不超过 17×17，周期为 4，速度为 c/2 的 [glide symmetric](https://en.wikipedia.org/wiki/Glide_reflection) 的竖直方向的飞船，可以用：
@@ -127,11 +127,15 @@ LifeFind[17, 17, 4, 2, 0,
 
 尝试搜索图样的[祖先](http://www.conwaylife.com/wiki/Predecessor)。`Predecessor[pattern, n]` 表示搜索第 `n` 代的祖先。不指定 `n` 时，`n` 默认是 1，也就是说，搜的是[父母](http://www.conwaylife.com/wiki/Parent)。搜索范围有限，搜不出结果不能说明这个图样是[伊甸园](http://www.conwaylife.com/wiki/Garden_of_Eden)。可以设置 `"Rule"` 选项。
 
+#### `CA`
+
+将一个图样演化 `n` 代，输出一个三维数组。`CA[pattern, n, "Rule" -> rule]` 相当于 `CellularAutomaton[{RuleNumber[rule], 2, {1, 1}}, {pattern, 0}, gen]`。
+
 #### `ExportGIF`
 
 把一个图样导出成 GIF 文件。用法是 `ExportGIF[file, pattern, gen]`，这里 `file`、`pattern`、`gen` 分别为要导出到的文件名、图样（一个数组）、绘制的代数。可以设置 `"Rule"` 和 `"DisplayDurations"` 两个选项，后者表示 GIF 每一帧的时长，单位为秒。
 
-#### `PossibleRules`
+#### `Rules`
 
 输入一个图样（作为一个三维数组），给出它所满足的所有规则。结果以一个[关联列表](https://reference.wolfram.com/language/ref/Association.html)的形式给出，其中 `True` 和 `False` 分别表示规则中必须有/没有这一项。比如说，`<|{"B", "0"} -> False, {"B", "3", "a"} -> True, {"S", "4", "k"} -> False|>` 表示规则中必须有 `B3a`，不能有 `B0` 和 `S4k`，其它的项则可有可无。暂不支持自动判断是不是 `B0` 的规则；如果是 `B0` 的规则，需手动设置选项 `"B0" -> True`。
 

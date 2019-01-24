@@ -20,10 +20,13 @@ returns a list of plots, and prints the RLE of the first generation.";
 Predecessor::usage =
   "Predecessor[pattern, n] tries to find a predecessor of n \
 generations of the pattern.";
+CA::usage =
+  "CA[pattern, n, \"Rule\" -> rule] gives \
+CellularAutomaton[{RuleNumber[rule], 2, {1, 1}}, {pattern, 0}, gen].";
 ExportGIF::usage =
   "ExportGIF[file, pattern, n] plots the pattern for n generations \
 and export it to a GIF file.";
-PossibleRules::usage =
+Rules::usage =
   "Give all possible rules of a pattern. The result is given in an \
 Association, where True (resp. False) means this term should (resp. \
 should not) appear in the rule.";
@@ -115,21 +118,24 @@ RuleNumber[rule_String] :=
     IgnoreCase -> True]];
 
 Options[ToRLE] = {"Rule" :> $Rule};
+Options[ToRLE] = {"Rule" :> $Rule};
 ToRLE[array_List, OptionsPattern[]] :=
   "x = " <> #2 <> ", y = " <> #1 <> ", rule = " <>
       OptionValue["Rule"] <> "\n" & @@ ToString /@ Dimensions@array <>
     StringRiffle[
     StringCases[
      StringReplace[
-      StringReplace[Riffle[array /. {1 -> "o", 0 -> "b"}, "$"] <> "!",
-        "b" .. ~~ s : "$" | "!" :> s],
+      StringReplace[
+       StringReplace[Riffle[# /. {1 -> "o", 0 -> "b"}, "$"] <> "!",
+        "b" .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"], 
       r : (x_) .. /; StringLength@r > 1 :>
        ToString@StringLength@r <> x],
      l : (___ ~~ "o" | "b" | "$" | "!") /; StringLength@l <= 70],
     "\n"];
 
 FromRLE[rle_String] :=
-  PadRight[StringCases[{"." | "b" -> 0, "o" | "O" | "*" -> 1}] /@
+  PadRight[StringCases[{"." | "b" -> 0, "o" | "O" | "*" -> 1,
+      a_?UpperCaseQ :> Tr@ToCharacterCode@a - 64}] /@
     StringSplit[
      StringReplace[
       StringDelete[
@@ -290,21 +296,25 @@ Predecessor[pattern_, n_, opt : OptionsPattern[]] :=
    n + 1, "Periodic" -> False, opt,
    "KnownCells" -> Append[ConstantArray[{}, n], pattern]];
 
+Options[CA] = {"Rule" :> $Rule};
+CA[pattern_, gen_, opts : OptionsPattern[]] :=
+  CellularAutomaton[{RuleNumber@OptionValue["Rule"],
+    2, {1, 1}}, {pattern, 0}, gen];
+
 Options[ExportGIF] =
-  Join[{"Rule" :> $Rule, "DisplayDurations" -> 0.5},
+  Join[{"DisplayDurations" -> 0.5}, Options[CA],
    Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
 ExportGIF[file_, pattern_, gen_, opts : OptionsPattern[]] :=
   Export[file,
    ArrayPlot[#, Mesh -> All,
       FilterRules[{opts}, Options[ArrayPlot]]] & /@
-    CellularAutomaton[{RuleNumber@OptionValue["Rule"],
-      2, {1, 1}}, {pattern, 0}, gen - 1],
+    CA[pattern, gen - 1, FilterRules[{opts}, Options[CA]]],
    "DisplayDurations" -> OptionValue["DisplayDurations"],
    "AnimationRepetitions" -> Infinity];
 
-PossibleRules::nrule = "No such rule.";
-Options[PossibleRules] := {"B0" -> False};
-PossibleRules[pattern_, OptionsPattern[]] :=
+Rules::nrule = "No such rule.";
+Options[Rules] := {"B0" -> False};
+Rules[pattern_, OptionsPattern[]] :=
   Check[KeyMap[# /. {h_, n : "0" | "8", "c"} :> {h, n} &]@
     KeySort@Merge[
       Flatten@BlockMap[
@@ -315,8 +325,8 @@ PossibleRules[pattern_, OptionsPattern[]] :=
            If[OptionValue["B0"], 1/2 + (-1)^Tr@#2/2, 0]] &,
          pattern], {2, 3, 3}, 1],
       Switch[Union@#, {0}, False, {1}, True, _,
-        Message[PossibleRules::nrule]] &], Null,
-   PossibleRules::nrule];
+        Message[Rules::nrule]] &], Null,
+   Rules::nrule];
 
 End[];
 
