@@ -79,7 +79,7 @@ LifeFind[5, 16, 3, 1, 0]
 
 #### `"KnownCells"`
 
-此选项用于指定已知的细胞，其值是一个三维数组，三个维度分别对应 `p`，`x`，`y`。数组中 `1` 代表已知的活细胞，`0` 代表已知的死细胞，其它的值代表未确定的细胞。比如说，`"KnownCells" -> {{{1, _}, {_, 0}}}` 表示要搜索的图样第一代最左上方的细胞是 1，第二行第二列的细胞是 0。
+此选项用于指定已知的细胞，其值是一个三维数组，三个维度分别对应 `p`，`x`，`y`。数组中 `1` 代表已知的活细胞，`0` 代表已知的死细胞，其它的值代表未确定的细胞。这个数组可以比搜索的图样小，它会自动向右下方补齐。比如说，`"KnownCells" -> {{{1, _}, {_, 0}}}` 表示要搜索的图样第一代最左上方的细胞是 1，第二行第二列的细胞是 0。
 
 #### `"OtherConditions"`
 
@@ -97,6 +97,19 @@ LifeFind[16, 16, 2,
 LifeFind[17, 17, 4, 2, 0,
  "OtherConditions" ->
   Array[C[##, 1] \[Equivalent] C[# + 1, 17 + 1 - #2, 3] &, {17, 17}, 1, And]]
+```
+
+再比如说，要找大小不超过 10×10，恢复时间不超过 4 的 [glider eater](http://www.conwaylife.com/wiki/Eater)，可以用：
+
+```Mathematica
+LifeFind[10, 10, 6, "Rule" -> "B3/S23", "Periodic" -> False,
+ "KnownCells" ->
+  Join[{{{0, 1, 0}, {0, 0, 1}, {1, 1, 1}}}, Table[{}, 3],
+   Table[0, 2, 4, 4]],
+ "OtherConditions" ->
+  Array[If[Max[##] <= 3, True,
+     C[##, 1] \[Equivalent] C[##, 5] \[Equivalent] C[##, 6]] &,
+   {10, 10}, 1, And]]
 ```
 
 ## 其他函数
@@ -125,11 +138,11 @@ LifeFind[17, 17, 4, 2, 0,
 
 #### `Predecessor`
 
-尝试搜索图样的[祖先](http://www.conwaylife.com/wiki/Predecessor)。`Predecessor[pattern, n]` 表示搜索第 `n` 代的祖先。不指定 `n` 时，`n` 默认是 1，也就是说，搜的是[父母](http://www.conwaylife.com/wiki/Parent)。搜索范围有限，搜不出结果不能说明这个图样是[伊甸园](http://www.conwaylife.com/wiki/Garden_of_Eden)。可以设置 `"Rule"` 选项。
+尝试搜索图样的[祖先](http://www.conwaylife.com/wiki/Predecessor)。`Predecessor[pattern, n]` 表示搜索第 `n` 代的祖先。不指定 `n` 时，`n` 默认是 1，也就是说，搜的是[父母](http://www.conwaylife.com/wiki/Parent)。注意搜索范围有限，搜不出结果不能说明这个图样是[伊甸园](http://www.conwaylife.com/wiki/Garden_of_Eden)。可以设置 `"Rule"` 选项。
 
 #### `CA`
 
-将一个图样演化 `n` 代，输出一个三维数组。`CA[pattern, n, "Rule" -> rule]` 相当于 `CellularAutomaton[{RuleNumber[rule], 2, {1, 1}}, {pattern, 0}, gen]`。
+将一个图样演化 `n` 代，输出一个三维数组。`CA[pattern, n, "Rule" -> rule]` 相当于 `CellularAutomaton[{RuleNumber[rule], 2, {1, 1}}, {pattern, 0}, gen]`。可以设置 `"Rule"` 选项。
 
 #### `ExportGIF`
 
