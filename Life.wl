@@ -245,6 +245,9 @@ RuleNumber[rule_String] :=
       StartOfString ~~ "g" ~~ DigitCharacter .. ~~ "/" | "/b" | "b" ~~
          b : patNbhd ~~ "/" | "/s" | "s" ~~ s : patNbhd ~~
         EndOfString :> {s, b},
+      StartOfString ~~ "b" ~~ b : patNbhd ~~ "/" | "/s" | "s" ~~
+         s : patNbhd ~~ "/" ~~ DigitCharacter .. ~~
+        EndOfString :> {s, b},
       StartOfString ~~ s : patNbhd ~~ "/" ~~ b : patNbhd ~~ "/" ~~
         DigitCharacter .. ~~ EndOfString :> {s, b},
       StartOfString ~~ "b" ~~ b : ("0" | "1" | "2" | "3" | "4") ... ~~
@@ -265,23 +268,39 @@ ToRLE[array_List, OptionsPattern[]] :=
      StringReplace[
       StringReplace[
        StringReplace[
-        Riffle[array /. {1 -> "o", 0 -> "b"}, "$"] <> "!",
+        Riffle[If[Max@array < 2, array /. {1 -> "o", 0 -> "b"},
+           array /. {0 -> ".",
+             n_ /; n < 25 :> FromCharacterCode[n + 64],
+             n_ /; n > 24 :>
+              FromCharacterCode[Quotient[n, 24, 1] + 111] <>
+               FromCharacterCode[Mod[n, 24, 1] + 64]}], "$"] <> "!",
         "b" .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"],
-      r : (x_) .. /; StringLength@r > 1 :>
-       ToString@StringLength@r <> x],
-     l : (___ ~~ "o" | "b" | "$" | "!") /; StringLength@l <= 70],
+      r : (x :
+            "$" | "." | "b" | "o" |
+             "*" | ("" | Alternatives @@ CharacterRange["p", "y"] ~~
+               Alternatives @@ CharacterRange["A", "X"])) .. /;
+        StringLength@r > StringLength@x :>
+       ToString[StringLength@r/StringLength@x] <> x],
+     l : (___ ~~ Except[DigitCharacter]) /; StringLength@l <= 70],
     "\n"];
 
 FromRLE[rle_String] :=
-  PadRight[StringCases[{"." | "b" -> 0, "o" | "O" | "*" -> 1,
-      a_?UpperCaseQ :> Tr@ToCharacterCode@a - 64}] /@
+  PadRight[StringCases[{"." | "b" -> 0, "o" | "*" -> 1,
+      a : Alternatives @@ CharacterRange["p", "y"] ~~
+        b : Alternatives @@ CharacterRange["A", "X"] :>
+       Tr[24 (ToCharacterCode@a - 111) + ToCharacterCode@b - 64],
+      b : Alternatives @@ CharacterRange["A", "X"] :>
+       Tr[ToCharacterCode@b - 64]}] /@
     StringSplit[
      StringReplace[
       StringDelete[
        rle, (StartOfLine ~~ ("x" | "#") ~~ Shortest@___ ~~
           EndOfLine) | "\n" | ("!" ~~ ___)],
-      n : DigitCharacter .. ~~ a_ :> StringRepeat[a, FromDigits@n]],
-     "$", All]];
+      n : DigitCharacter .. ~~
+        a : ("$" | "." | "b" | "o" |
+           "*" | ("" | Alternatives @@ CharacterRange["p", "y"] ~~
+             Alternatives @@ CharacterRange["A", "X"])) :>
+       StringRepeat[a, FromDigits@n]], "$", All]];
 
 FromAPGCode::napg = "Invalid apgcode.";
 FromAPGCode[apgcode_String] :=
