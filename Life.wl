@@ -274,15 +274,16 @@ ToRLE[array_List, OptionsPattern[]] :=
              n_ /; n > 24 :>
               FromCharacterCode[Quotient[n, 24, 1] + 111] <>
                FromCharacterCode[Mod[n, 24, 1] + 64]}], "$"] <> "!",
-        "b" .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"],
+        "." | "b" .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"],
       r : (x :
-            "$" | "." | "b" | "o" |
-             "*" | ("" | Alternatives @@ CharacterRange["p", "y"] ~~
-               Alternatives @@ CharacterRange["A", "X"])) .. /;
-        StringLength@r > StringLength@x :>
-       ToString[StringLength@r/StringLength@x] <> x],
-     l : (___ ~~ Except[DigitCharacter]) /; StringLength@l <= 70],
-    "\n"];
+           "$" | "." | "b" | "o" |
+            "*" | ("" | Alternatives @@ CharacterRange["p", "y"] ~~
+              Alternatives @@ CharacterRange["A", "X"])) .. :>
+       (If[# == 1, "", ToString@#] &[StringLength@r/StringLength@x]) <>
+         x], l : (___ ~~
+         "$" | "!" | "." | "b" | "o" | "*" |
+          Alternatives @@ CharacterRange["A", "X"]) /;
+      StringLength@l <= 70], "\n"];
 
 FromRLE[rle_String] :=
   PadRight[StringCases[{"." | "b" -> 0, "o" | "*" -> 1,
