@@ -259,6 +259,13 @@ RuleNumber[rule_String] :=
    If[sb == {}, Message[RuleNumber::nrule];
     RuleNumber[$Rule], toNum[sb[[1]]]]];
 
+GenerationsNumber[rule_] :=
+ If[# == {}, 2, #[[1]]] &@StringCases[rule,
+   {StartOfString ~~ "g" ~~ g : DigitCharacter .. ~~ "/" | "b" :>
+     FromDigits[g],
+    ___ ~~ "/" | "s" ~~ ___ ~~ "/" ~~ g : DigitCharacter .. ~~
+      EndOfString :> FromDigits[g]}, IgnoreCase -> True]
+
 Options[ToRLE] = {"Rule" :> $Rule};
 ToRLE[array_List, OptionsPattern[]] :=
   "x = " <> #2 <> ", y = " <> #1 <> ", rule = " <>
@@ -346,10 +353,11 @@ SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
 SearchPattern[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, dx, 0, opts];
 SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
-  Block[{bf, random, c, vcell, vchange, agarx, agary, rule, change,
-    known, sym, other, result},
+  Block[{bf, gen, random, c, vcell, vchange, agarx, agary, rule,
+    change, known, sym, other, result},
    bf = FromDigits[
      IntegerDigits[RuleNumber[OptionValue["Rule"]], 2, 512] + 1, 4];
+   gen = GenerationsNumber[OptionValue["Rule"]];
    agarx[{a_, _}] := agarx[a];
    agarx[True] = agarx[0];
    agarx[a_Integer] :=
@@ -373,8 +381,14 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    c[i_, j_, t_] :=
     If[random[[i, j, t]] == 1, ! vcell[i, j, t], vcell[i, j, t]];
    rule =
-    Array[BooleanFunction[bf,
-       Flatten@{Array[c, {3, 3, 1}, {##} - 1], c[##]}, "CNF"] &,
+    Array[BooleanConvert[((c[#, #2, #3 - 1] || !
+             Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or]) &&
+           BooleanFunction[bf,
+           Flatten@{Array[c, {3, 3, 1}, {##} - 1],
+             c[##]}]) ||
+        (! c[#, #2, #3 - 1] &&
+          Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or] && !
+           c[##]), "CNF"] &,
      {x + 2 + Abs@dx, y + 2 + Abs@dy,
       If[OptionValue["Periodic"], p, p - 1]},
      {-Max[dx, 0], -Max[dy, 0], If[OptionValue["Periodic"], 1, 2]},
