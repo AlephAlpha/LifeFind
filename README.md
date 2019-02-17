@@ -7,9 +7,9 @@ A simple and naïve Game of Life pattern searcher written in Wolfram Language.
 
 ---
 
-这是个用来搜索生命游戏（以及别的 Life-like 的元胞自动机）里的图样的 Mathematica 包。搜索方式是把图样要满足的条件看成一个 [SAT 问题](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem)，然后用 Mathematica 自带的 [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html) 函数求解。
+这是个用来搜索生命游戏（以及别的 Life-like 的元胞自动机）里的图样的 Mathematica 包。搜索方式是把图样要满足的条件看成一个 [SAT 问题](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem)，然后用 Mathematica 自带的 [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html) 函数求解。这个包的灵感来自 Oscar Cunningham 写的 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)。
 
-这个包就是写着玩的，搜索速度慢得离谱，完全无法搜索周期稍大的图样。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)，或者见[《生命游戏搜索程序汇总》](https://www.jianshu.com/p/81c90ba597ea)。
+这个包就是写着玩的，搜索速度慢得离谱，完全无法搜索周期稍大的图样。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)（可搜各种图样），或者 [ntzfind](https://github.com/rokicki/ntzfind)（专搜飞船）。更多搜索工具见[《生命游戏搜索程序汇总》](https://www.jianshu.com/p/81c90ba597ea)。
 
 我不怎么懂编程，代码肯定有很多 bug。遇到问题欢迎来提 [issue](https://github.com/AlephAlpha/LifeFind/issues)。
 
@@ -55,11 +55,11 @@ LifeFind[5, 16, 3, 1, 0]
 
 #### `"Rule"`
 
-表示搜索的规则。目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。不支持六边形的规则，也不支持后面加 `V` 表示冯·诺依曼邻域的写法。
+表示搜索的规则。目前仅支持 [totalistic](http://conwaylife.com/wiki/Totalistic_Life-like_cellular_automaton) 或者 [isotropic non-totalistic](http://conwaylife.com/wiki/Isotropic_non-totalistic_Life-like_cellular_automaton) 的 Life-like 的规则，包括六边形的规则，规则的写法见 [Golly 的帮助文件](http://golly.sourceforge.net/Help/Algorithms/QuickLife.html)。
 
 #### `"Symmetry"`
 
-表示搜索的对称性。支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。对称性的前面两个字符代表图样的对称群，"Cn" 和 "Dn" 分别代表[循环群](https://en.wikipedia.org/wiki/Cyclic_group)和[二面体群](https://en.wikipedia.org/wiki/Dihedral_group)； "D2" 和 "D4" 后面的符号代表图样的对称轴。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)。
+表示搜索的对称性。支持的对称性包括 "C1"，"C2"，"C4"，"D2-"，"D2\\\\"，"D2|"，"D2/"，"D4+"，"D4X"，"D8"。对称性的前面两个字符代表图样的对称群，"Cn" 和 "Dn" 分别代表[循环群](https://en.wikipedia.org/wiki/Cyclic_group)和[二面体群](https://en.wikipedia.org/wiki/Dihedral_group)； "D2" 和 "D4" 后面的符号代表图样的对称轴。这些对称性的写法是我从 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search) 抄来的，具体的说明见[这里](http://www.conwaylife.com/wiki/Symmetry)。不支持六边形的对称性。
 
 #### `"Agar"`
 
@@ -126,7 +126,7 @@ LifeFind[10, 10, 6, "Rule" -> "B3/S23", "Periodic" -> False,
 
 #### `FromRLE`
 
-把 RLE 转换成一个数组。只支持两种状态的规则。
+把 RLE 转换成一个数组。
 
 #### `FromAPGCode`
 
@@ -148,9 +148,9 @@ LifeFind[10, 10, 6, "Rule" -> "B3/S23", "Periodic" -> False,
 
 把一个图样导出成 GIF 文件。用法是 `ExportGIF[file, pattern, gen]`，这里 `file`、`pattern`、`gen` 分别为要导出到的文件名、图样（一个数组）、绘制的代数。可以设置 `"Rule"` 和 `"DisplayDurations"` 两个选项，后者表示 GIF 每一帧的时长，单位为秒。
 
-#### `Rules`
+#### `PatternRules`
 
-输入一个图样（作为一个三维数组），给出它所满足的所有规则。结果以一个[关联列表](https://reference.wolfram.com/language/ref/Association.html)的形式给出，其中 `True` 和 `False` 分别表示规则中必须有/没有这一项。比如说，`<|{"B", "0"} -> False, {"B", "3", "a"} -> True, {"S", "4", "k"} -> False|>` 表示规则中必须有 `B3a`，不能有 `B0` 和 `S4k`，其它的项则可有可无。暂不支持自动判断是不是 `B0` 的规则；如果是 `B0` 的规则，需手动设置选项 `"B0" -> True`。
+输入一个图样（作为一个三维数组），给出它所满足的所有规则。结果以一个[关联列表](https://reference.wolfram.com/language/ref/Association.html)的形式给出，其中 `True` 和 `False` 分别表示规则中必须有/没有这一项。比如说，`<|"B0" -> False, "B3a" -> True, "S4k" -> False|>` 表示规则中必须有 `B3a`，不能有 `B0` 和 `S4k`，其它的项则可有可无。不支持六边形的规则。不支持自动判断是不是 `B0` 的规则；如果是 `B0` 的规则，需手动设置选项 `"B0" -> True`。
 
 #### `$Rule`
 
