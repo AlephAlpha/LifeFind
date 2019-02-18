@@ -238,33 +238,41 @@ RuleNumber[rule_String] :=
        "S" <> # & /@
         StringCases[s, parseNbhdH, IgnoreCase -> True]]];
    sb = StringCases[
-     rule, {StartOfString ~~ "b" ~~ b : patNbhd ~~ "/" | "/s" | "s" ~~
-         s : patNbhd ~~ EndOfString :> {s, b},
-      StartOfString ~~ s : patNbhd ~~ "/" ~~ b : patNbhd ~~
+      rule, {StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~ "b" ~~
+         b : patNbhd ~~ "/" | "/s" | "s" ~~
+        s : patNbhd ~~ ("/" ~~ DigitCharacter ..) | "" ~~
         EndOfString :> {s, b},
-      StartOfString ~~ "g" ~~ DigitCharacter .. ~~ "/" | "/b" | "b" ~~
-         b : patNbhd ~~ "/" | "/s" | "s" ~~ s : patNbhd ~~
+      StartOfString ~~ s : patNbhd ~~ "/" ~~
+        b : patNbhd ~~ ("/" ~~ DigitCharacter ..) | "" ~~
         EndOfString :> {s, b},
-      StartOfString ~~ "b" ~~ b : patNbhd ~~ "/" | "/s" | "s" ~~
-         s : patNbhd ~~ "/" ~~ DigitCharacter .. ~~
-        EndOfString :> {s, b},
-      StartOfString ~~ s : patNbhd ~~ "/" ~~ b : patNbhd ~~ "/" ~~
-        DigitCharacter .. ~~ EndOfString :> {s, b},
-      StartOfString ~~ "b" ~~ b : ("0" | "1" | "2" | "3" | "4") ... ~~
-         "/" | "/s" | "s" ~~ s : ("0" | "1" | "2" | "3" | "4") ... ~~
-        "v" ~~ EndOfString :> {s, b, "v"},
-      StartOfString ~~ "b" ~~ b : patNbhdH ~~ "/" | "/s" | "s" ~~
-        s : patNbhdH ~~ "h" ~~ EndOfString :> {s, b, "h"}},
+      StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~ "b" ~~
+        b : ("0" | "1" | "2" | "3" | "4") ... ~~ "/" | "/s" | "s" ~~
+        s : ("0" | "1" | "2" | "3" | "4") ... ~~ ("/" ~~
+           DigitCharacter ..) | "" ~~ "v" ~~ EndOfString :> {s, b,
+        "v"},
+      StartOfString ~~ s : ("0" | "1" | "2" | "3" | "4") ... ~~ "/" ~~
+         b : ("0" | "1" | "2" | "3" | "4") ... ~~ ("/" ~~
+           DigitCharacter ..) | "" ~~ "v" ~~ EndOfString :> {s, b,
+        "v"},
+      StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~ "b" ~~
+        b : patNbhdH ~~ "/" | "/s" | "s" ~~
+        s : patNbhdH ~~ ("/" ~~ DigitCharacter ..) | "" ~~ "h" ~~
+        EndOfString :> {s, b, "h"},
+      StartOfString ~~ s : patNbhdH ~~ "/" ~~
+        b : patNbhdH ~~ ("/" ~~ DigitCharacter ..) | "" ~~ "h" ~~
+        EndOfString :> {s, b, "h"}},
      IgnoreCase -> True];
    If[sb == {}, Message[RuleNumber::nrule];
     RuleNumber[$Rule], toNum[sb[[1]]]]];
 
 GenerationsNumber[rule_] :=
- If[# == {}, 2, #[[1]]] &@StringCases[rule,
-   {StartOfString ~~ "g" ~~ g : DigitCharacter .. ~~ "/" | "b" :>
-     FromDigits[g],
-    ___ ~~ "/" | "s" ~~ ___ ~~ "/" ~~ g : DigitCharacter .. ~~
-      EndOfString :> FromDigits[g]}, IgnoreCase -> True]
+  If[# == {}, 2, #[[1]]] &@
+   StringCases[
+    rule, {StartOfString ~~ "g" ~~ g : DigitCharacter .. ~~
+       "/" | "b" :> FromDigits[g],
+     ___ ~~ "/" | "s" ~~ ___ ~~ "/" ~~ g : DigitCharacter .. ~~
+       "" | "v" | "h" ~~ EndOfString :> FromDigits[g]},
+    IgnoreCase -> True];
 
 Options[ToRLE] = {"Rule" :> $Rule};
 ToRLE[array_List, OptionsPattern[]] :=
