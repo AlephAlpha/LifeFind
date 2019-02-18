@@ -350,6 +350,8 @@ PlotAndPrintRLE[pattern_, opts : OptionsPattern[]] :=
 
 SearchPattern::nsat = "No such pattern.";
 SearchPattern::nsym = "Invalid symmetry. Uses \"C1\" instead.";
+SearchPattern::genper =
+  "Nonperiodic patterns are not supported for Generations rules.";
 Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1",
    "Periodic" -> True, "Agar" -> False, "Changing" -> False,
    "RandomArray" -> 0.5, "KnownCells" -> {},
@@ -366,6 +368,8 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    bf = FromDigits[
      IntegerDigits[RuleNumber[OptionValue["Rule"]], 2, 512] + 1, 4];
    gen = GenerationsNumber[OptionValue["Rule"]];
+   If[! OptionValue["Periodic"] && gen > 2,
+    Message[SearchPattern::genper]];
    agarx[{a_, _}] := agarx[a];
    agarx[True] = agarx[0];
    agarx[a_Integer] :=
