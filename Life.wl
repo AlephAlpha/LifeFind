@@ -252,26 +252,26 @@ RuleNumber[rule_String] :=
       rule, {StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~ "b" ~~
          b : patNbhd ~~ "/" | "/s" | "s" ~~
         s : patNbhd ~~ ("/" ~~ DigitCharacter ..) | "" ~~
-        EndOfString :> {s, b},
+        ":" | EndOfString :> {s, b},
       StartOfString ~~ s : patNbhd ~~ "/" ~~
         b : patNbhd ~~ ("/" ~~ DigitCharacter ..) | "" ~~
-        EndOfString :> {s, b},
+        ":" | EndOfString :> {s, b},
       StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~ "b" ~~
         b : ("0" | "1" | "2" | "3" | "4") ... ~~ "/" | "/s" | "s" ~~
         s : ("0" | "1" | "2" | "3" | "4") ... ~~ ("/" ~~
-           DigitCharacter ..) | "" ~~ "v" ~~ EndOfString :> {s, b,
-        "v"},
+           DigitCharacter ..) | "" ~~ "v" ~~ ":" | EndOfString :>
+        {s, b, "v"},
       StartOfString ~~ s : ("0" | "1" | "2" | "3" | "4") ... ~~ "/" ~~
-         b : ("0" | "1" | "2" | "3" | "4") ... ~~ ("/" ~~
-           DigitCharacter ..) | "" ~~ "v" ~~ EndOfString :> {s, b,
-        "v"},
+        b : ("0" | "1" | "2" | "3" | "4") ... ~~ ("/" ~~
+           DigitCharacter ..) | "" ~~ "v" ~~ ":" | EndOfString :>
+        {s, b, "v"},
       StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~ "b" ~~
         b : patNbhdH ~~ "/" | "/s" | "s" ~~
         s : patNbhdH ~~ ("/" ~~ DigitCharacter ..) | "" ~~ "h" ~~
-        EndOfString :> {s, b, "h"},
+        ":" | EndOfString :> {s, b, "h"},
       StartOfString ~~ s : patNbhdH ~~ "/" ~~
         b : patNbhdH ~~ ("/" ~~ DigitCharacter ..) | "" ~~ "h" ~~
-        EndOfString :> {s, b, "h"}},
+        ":" | EndOfString :> {s, b, "h"}},
      IgnoreCase -> True];
    If[sb == {}, Message[RuleNumber::nrule];
     RuleNumber[$Rule], toNum[sb[[1]]]]];
@@ -282,7 +282,7 @@ GenerationsNumber[rule_] :=
     rule, {StartOfString ~~ "g" ~~ g : DigitCharacter .. ~~
        "/" | "b" :> FromDigits[g],
      ___ ~~ "/" | "s" ~~ ___ ~~ "/" ~~ g : DigitCharacter .. ~~
-       "" | "v" | "h" ~~ EndOfString :> FromDigits[g]},
+       "" | "v" | "h" ~~ ":" | EndOfString :> FromDigits[g]},
     IgnoreCase -> True];
 
 Options[ToRLE] = {"Rule" :> $Rule};
