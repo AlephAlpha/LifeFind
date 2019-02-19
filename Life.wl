@@ -350,13 +350,11 @@ Options[PlotAndPrintRLE] =
   Join[Options[ToRLE],
    Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
 PlotAndPrintRLE[pattern_, opts : OptionsPattern[]] :=
-  If[ArrayDepth@pattern == 2,
-   ArrayPlot[
-    Echo[pattern, "RLE: ", ToRLE[#, "Rule" -> OptionValue["Rule"]] &],
-     FilterRules[{opts}, Options[ArrayPlot]], Mesh -> All],
-   ArrayPlot[#, FilterRules[{opts}, Options[ArrayPlot]],
-      Mesh -> All] & /@
-    Echo[pattern, "RLE: ",
+  Block[{gen = GenerationsNumber[OptionValue["Rule"]]},
+   ArrayPlot[# /. i_ /; i > 0 :> (gen - i)/(gen - 1),
+      FilterRules[{opts}, Options[ArrayPlot]], Mesh -> All,
+      ColorFunctionScaling -> False] & /@
+    Echo[If[ArrayDepth@pattern == 2, {pattern}, pattern], "RLE: ",
      ToRLE[#[[1]], "Rule" -> OptionValue["Rule"]] &]];
 
 SearchPattern::nsat = "No such pattern.";
@@ -455,9 +453,15 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
       Flatten@{Array[vcell, {x, y, p}], Array[vchange, {x, y}]},
      Method -> "SAT"];
    If[result == {}, Message[SearchPattern::nsat]; {},
-    Transpose[
-     Mod[random + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
-     {2, 3, 1}]]];
+    Nest[BlockMap[Flatten@# /.
+         {{0 | gen - 1, 0} -> 0,
+          {i_, 0} /; i < gen - 1 :> i + 1,
+          {_, i_} /; i > 0 :> i} &,
+       Prepend[#, Drop[PadRight[Last@#, {x, y} + {dx, dy}], dx, dy]],
+       {2, 1, 1}, 1] &,
+     Transpose[
+      Mod[random + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
+      {2, 3, 1}], gen - 1]]];
 
 Options[LifeFind] =
   Union[Options[SearchPattern], Options[PlotAndPrintRLE]];

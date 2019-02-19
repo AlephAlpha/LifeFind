@@ -41,4 +41,4 @@ You can specify the rule and the [symmetry](http://www.conwaylife.com/wiki/Symme
 * Totalistic and non-totalistic [hexagonal](http://www.conwaylife.com/wiki/Hexagonal_neighbourhood) rules (hexagonal symmetries are _not_ supported)
 * [Generations](http://www.conwaylife.com/wiki/Generations)
 
-In the output for generations rules, the "dying" states are treaded as dead (`b` in RLE), so you need to manually determine which states they actually are.
+The output for Generations rules might be incomplete: there might be "dying" cells outside the bounding box. I will _not_ fix this.
