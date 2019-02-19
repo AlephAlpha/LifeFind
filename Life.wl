@@ -138,10 +138,15 @@ NbhdNumber = <|"B0" -> {0},
    "S7e" -> {383, 479, 503, 509},
    "S8" -> {511}|>;
 
+NbhdNumberIso =
+  KeySort@Merge[
+    Table[{"B", "S"}[[#[[5]] + 1]] <> ToString@Tr@Delete[#, 5] &@
+       IntegerDigits[i, 2, 9] -> i, {i, 0, 511}], # &];
+
 NbhdNumberV =
   KeySort@Merge[
     Table[{"B", "S"}[[#[[5]] + 1]] <> ToString@Tr@#[[{2, 4, 6, 8}]] &@
-       IntegerDigits[i, 2, 9] -> i, {i, 0, 512}], # &];
+       IntegerDigits[i, 2, 9] -> i, {i, 0, 511}], # &];
 
 NbhdNumberH = <|"B0" -> {0, 4, 64, 68},
    "B1" -> {1, 2, 5, 6, 8, 12, 32, 36, 65, 66, 69, 70, 72, 76, 96,
@@ -195,6 +200,12 @@ NbhdNumberH = <|"B0" -> {0, 4, 64, 68},
      439, 441, 442, 445, 446, 475, 479, 499, 503, 505, 506, 509,
      510},
    "S6" -> {443, 447, 507, 511}|>;
+
+NbhdNumberHIso =
+  KeySort@Merge[
+    Table[{"B", "S"}[[#[[5]] + 1]] <>
+         ToString@Tr@#[[{1, 2, 4, 6, 8, 9}]] &@
+       IntegerDigits[i, 2, 9] -> i, {i, 0, 511}], # &];
 
 RuleNumber::nrule = "Invalid rule. Uses " <> $Rule <> " instead.";
 RuleNumber[n_Integer] := n;
@@ -495,17 +506,24 @@ ExportGIF[file_, pattern_, gen_, opts : OptionsPattern[]] :=
    "AnimationRepetitions" -> Infinity];
 
 PatternRules::nrule = "No such rule.";
-Options[PatternRules] := {"B0" -> False};
+Options[PatternRules] := {"B0" -> False, "Hexagonal" -> False,
+   "Isotropic" -> False};
 PatternRules[pattern_, OptionsPattern[]] :=
-  Check[KeySort@Merge[Flatten@BlockMap[Position[NbhdNumber,
-           FromDigits[Flatten@#[[1]], 2]][[1, 1, 1]] -> #[[2, 2, 2]] &,
-       MapIndexed[
-        ArrayPad[#, 2,
-          If[OptionValue["B0"], 1/2 + (-1)^Tr@#2/2, 0]] &, pattern],
-       {2, 3, 3}, 1],
-     Switch[Union@#, {0}, False, {1}, True,
-       _, Message[PatternRules::nrule]] &],
-   Null, PatternRules::nrule];
+  Block[{nbhd =
+     If[OptionValue["Hexagonal"],
+      If[OptionValue["Isotropic"], NbhdNumberHIso, NbhdNumberH],
+      If[OptionValue["Isotropic"], NbhdNumberIso, NbhdNumber]]},
+   Catch[KeySort@
+     Merge[Flatten@
+       BlockMap[
+        Position[nbhd, FromDigits[Flatten@#[[1]], 2]][[1, 1, 1]] ->
+          #[[2, 2, 2]] &,
+        MapIndexed[
+         ArrayPad[#, 2,
+           If[OptionValue["B0"], 1/2 + (-1)^Tr@#2/2, 0]] &,
+         pattern], {2, 3, 3}, 1],
+      Switch[Union@#, {0}, False, {1}, True, _,
+        Throw[Message[PatternRules::nrule]]] &]]];
 
 End[];
 

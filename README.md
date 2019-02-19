@@ -15,7 +15,7 @@ A simple and naïve Game of Life pattern searcher written in Wolfram Language.
 
 This is a Mathematica package for finding patterns in life-like cellular automata. Inspired by Oscar Cunningham's [Logic Life Search](https://github.com/OscarCunningham/logic-life-search), it converts the problem to a [SAT problem](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem), and solves it with the built-in function [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html).
 
-#### Usage
+### Usage
 
 This is a Mathematica package, so you need [_Wolfram Mathematica_](http://www.wolfram.com/mathematica/). [Here](http://support.wolfram.com/kb/5648) is a installation guide for any Mathemaica packages.
 
@@ -33,9 +33,9 @@ For example, this may find [25P3H1V0.1](http://conwaylife.com/wiki/25P3H1V0.1):
 LifeFind[5, 16, 3, 1, 0]
 ```
 
-You can specify the rule and the symmetry with the options `"Rule"` and `"Symmetry"` (see the screenshot above).
+You can specify the rule and the [symmetry](http://www.conwaylife.com/wiki/Symmetry) with the options `"Rule"` and `"Symmetry"` (see the screenshot above).
 
-#### Supported rules
+### Supported rules
 
 * [Totalistic](http://conwaylife.com/wiki/Outer-totalistic_Life-like_cellular_automata) and [non-totalistic](http://conwaylife.com/wiki/Non-totalistic_Life-like_cellular_automaton) life-like rules
 * Totalistic and non-totalistic [hexagonal](http://www.conwaylife.com/wiki/Hexagonal_neighbourhood) rules (hexagonal symmetries are _not_ supported)
