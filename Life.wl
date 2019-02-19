@@ -138,7 +138,7 @@ NbhdNumber = <|"B0" -> {0},
    "S7e" -> {383, 479, 503, 509},
    "S8" -> {511}|>;
 
-NbhdNumberIso =
+NbhdNumberT =
   KeySort@Merge[
     Table[{"B", "S"}[[#[[5]] + 1]] <> ToString@Tr@Delete[#, 5] &@
        IntegerDigits[i, 2, 9] -> i, {i, 0, 511}], # &];
@@ -201,7 +201,7 @@ NbhdNumberH = <|"B0" -> {0, 4, 64, 68},
      510},
    "S6" -> {443, 447, 507, 511}|>;
 
-NbhdNumberHIso =
+NbhdNumberHT =
   KeySort@Merge[
     Table[{"B", "S"}[[#[[5]] + 1]] <>
          ToString@Tr@#[[{1, 2, 4, 6, 8, 9}]] &@
@@ -507,12 +507,12 @@ ExportGIF[file_, pattern_, gen_, opts : OptionsPattern[]] :=
 
 PatternRules::nrule = "No such rule.";
 Options[PatternRules] := {"B0" -> False, "Hexagonal" -> False,
-   "Isotropic" -> False};
+   "Totalistic" -> False};
 PatternRules[pattern_, OptionsPattern[]] :=
   Block[{nbhd =
      If[OptionValue["Hexagonal"],
-      If[OptionValue["Isotropic"], NbhdNumberHIso, NbhdNumberH],
-      If[OptionValue["Isotropic"], NbhdNumberIso, NbhdNumber]]},
+      If[OptionValue["Totalistic"], NbhdNumberHT, NbhdNumberH],
+      If[OptionValue["Totalistic"], NbhdNumberT, NbhdNumber]]},
    Catch[KeySort@
      Merge[Flatten@
        BlockMap[
