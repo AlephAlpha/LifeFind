@@ -457,7 +457,10 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
          {{0 | gen - 1, 0} -> 0,
           {i_, 0} /; i < gen - 1 :> i + 1,
           {_, i_} /; i > 0 :> i} &,
-       Prepend[#, Drop[PadRight[Last@#, {x, y} + {dx, dy}], dx, dy]],
+       Prepend[#,
+        Drop[ArrayPad[
+          Last@#, {If[dx > 0, {0, dx}, {-dx, 0}],
+           If[dy > 0, {0, dy}, {-dy, 0}]}], dx, dy]],
        {2, 1, 1}, 1] &,
      Transpose[
       Mod[random + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
