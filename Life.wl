@@ -312,7 +312,7 @@ ToRLE[array_List, OptionsPattern[]] :=
              n_ /; n > 24 :>
               FromCharacterCode[Quotient[n, 24, 1] + 111] <>
                FromCharacterCode[Mod[n, 24, 1] + 64]}], "$"] <> "!",
-        "." | "b" .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"],
+        ("." | "b") .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"],
       r : (x :
            "$" | "." | "b" | "o" |
             "*" | ("" | Alternatives @@ CharacterRange["p", "y"] ~~
@@ -429,8 +429,9 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    change[True] = change[{1, 2}];
    change[{t1_, t2_}] :=
     Array[BooleanConvert[
-        c[##, t1] \[Xor] c[##, t2] \[Equivalent] vchange[##], "CNF"] &,
-      {x, y}, 1, And] && Array[vchange, {x, y}, 1, Or];
+        If[p == 1, c[##, 1],
+          c[##, t1] \[Xor] c[##, t2]] \[Equivalent] vchange[##],
+        "CNF"] &, {x, y}, 1, And] && Array[vchange, {x, y}, 1, Or];
    change[_] := True;
    known =
     MapIndexed[Switch[#, 1, c @@ #2, 0, ! c @@ #2, _, True] &,
