@@ -300,7 +300,7 @@ ToRLE[array_List, OptionsPattern[]] :=
              n_ /; n > 24 :>
               FromCharacterCode[Quotient[n, 24, 1] + 111] <>
                FromCharacterCode[Mod[n, 24, 1] + 64]}], "$"] <> "!",
-        "." | "b" .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"],
+        ("." | "b") .. ~~ s : "$" | "!" :> s], "$" .. ~~ "!" :> "!"],
       r : (x :
            "$" | "." | "b" | "o" |
             "*" | ("" | Alternatives @@ CharacterRange["p", "y"] ~~
