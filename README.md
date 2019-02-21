@@ -25,7 +25,7 @@ After the installation, you can load the package with
 << Life`
 ```
 
-The main function in the package in `LifeFind`. `LifeFind[x, y, p, dx, dy]` will try to find a pattern with size `(x,y)`, period `p` (default = `1`), and translating `(dx,dy)` (default = `(0,0)`) during a period.
+The main function in the package is `LifeFind`. `LifeFind[x, y, p, dx, dy]` will try to find a pattern with size `(x,y)`, period `p` (default = `1`), and translating `(dx,dy)` (default = `(0,0)`) during a period.
 
 For example, this may find [25P3H1V0.1](http://conwaylife.com/wiki/25P3H1V0.1):
 
