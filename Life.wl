@@ -4,7 +4,9 @@ BeginPackage["Life`"];
 
 $Rule::usage = "The default rule.";
 RuleNumber::usage = "Convert a rule string to a rule number.";
-ToRuleString::usage = "";
+ToRuleString::usage =
+  "Merge a list of neighborhood strings (e.g., {\"B3a\",\"S2e\"}) \
+into a rule string.";
 ToRLE::usage = "Convert a 2d 0-1 array to a string of RLE format.";
 FromRLE::usage = "Convert a string of RLE format to an array.";
 FromAPGCode::usage = "Convert an apgcode to an array.";
@@ -14,7 +16,12 @@ SearchPattern::usage =
   "SearchPattern[x, y, p, dx, dy] searches for a pattern with \
 bounding box (x, y), period p, and translating (dx, dy) for each \
 period. It returns a 0-1 array.";
-SearchPatternAndRule::usage = "";
+SearchPatternAndRule::usage =
+  "SearchPatternAndRule[x, y, p, dx, dy] searches for a pattern with \
+bounding box (x, y), period p, and translating (dx, dy) for each \
+period, and a rule that this pattern satisfies. It returns a 0-1 \
+array together with a list of neighborhood strings (e.g., \
+{\"B3a\",\"S2e\"}).";
 LifeFind::usage =
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
