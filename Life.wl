@@ -411,21 +411,21 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    random =
     RandomChoice[{OptionValue["RandomArray"],
        1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}];
-   c[i_, j_, t_] /; t < 1 || t > p :=
+   c[i_, j_, t_] /; t < 1 || t > p := c[i, j, t] =
     c[i - Quotient[t, p, 1] dx, j - Quotient[t, p, 1] dy,
      Mod[t, p, 1]];
-   c[i_, j_, t_] /; i < 1 || i > x :=
+   c[i_, j_, t_] /; i < 1 || i > x := c[i, j, t] =
     agarx[OptionValue["Agar"]][i, j, t];
-   c[i_, j_, t_] /; j < 1 || j > y :=
+   c[i_, j_, t_] /; j < 1 || j > y := c[i, j, t] =
     agary[OptionValue["Agar"]][i, j, t];
-   c[i_, j_, t_] :=
+   c[i_, j_, t_] := c[i, j, t] =
     If[random[[i, j, t]] == 1, ! vcell[i, j, t], vcell[i, j, t]];
    rule =
     Array[BooleanConvert[((c[#, #2, #3 - 1] || !
              Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or]) &&
-           BooleanFunction[bf,
+           BooleanFunction[bf, 10] @@
            Flatten@{Array[c, {3, 3, 1}, {##} - 1],
-             c[##]}]) ||
+             c[##]}) ||
         (! c[#, #2, #3 - 1] &&
           Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or] && !
            c[##]), "CNF"] &,
@@ -500,9 +500,9 @@ SearchPatternAndRule[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
 SearchPatternAndRule[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
   Block[{nbhd, gen, random, c, vcell, vrule, vchange, agarx, agary,
     rule, change, knownc, knownr, sym, other, result},
-   nbhd = If[OptionValue["Hexagonal"],
+   nbhd = Tr /@ (2^If[OptionValue["Hexagonal"],
      If[OptionValue["Totalistic"], NbhdNumberHT, NbhdNumberH],
-     If[OptionValue["Totalistic"], NbhdNumberT, NbhdNumber]];
+     If[OptionValue["Totalistic"], NbhdNumberT, NbhdNumber]]);
    gen = OptionValue["Generations"];
    If[! OptionValue["Periodic"] && gen > 2,
     Message[SearchPattern::genper]];
@@ -523,22 +523,22 @@ SearchPatternAndRule[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    random =
     RandomChoice[{OptionValue["RandomArray"],
        1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}];
-   c[i_, j_, t_] /; t < 1 || t > p :=
+   c[i_, j_, t_] /; t < 1 || t > p := c[i, j, t] =
     c[i - Quotient[t, p, 1] dx, j - Quotient[t, p, 1] dy,
      Mod[t, p, 1]];
-   c[i_, j_, t_] /; i < 1 || i > x :=
+   c[i_, j_, t_] /; i < 1 || i > x := c[i, j, t] =
     agarx[OptionValue["Agar"]][i, j, t];
-   c[i_, j_, t_] /; j < 1 || j > y :=
+   c[i_, j_, t_] /; j < 1 || j > y := c[i, j, t] =
     agary[OptionValue["Agar"]][i, j, t];
-   c[i_, j_, t_] :=
+   c[i_, j_, t_] := c[i, j, t] =
     If[random[[i, j, t]] == 1, ! vcell[i, j, t], vcell[i, j, t]];
    rule =
     Array[And @@
        Table[BooleanConvert[((c[#, #2, #3 - 1] || !
                Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1},
-                Or]) && (BooleanFunction[Tr[2^nbhd[k]],
+                Or]) && (BooleanFunction[nbhd[k], 9] @@
                Flatten@
-                Array[c, {3, 3, 1}, {##} - 1]] \[Implies] (vrule[
+                Array[c, {3, 3, 1}, {##} - 1] \[Implies] (vrule[
                  k] \[Equivalent] c[##]))) || (! c[#, #2, #3 - 1] &&
             Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1},
              Or] && ! c[##]), "CNF"], {k, Keys@nbhd}] &, {x + 2 +
