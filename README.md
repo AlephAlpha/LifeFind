@@ -33,7 +33,7 @@ For example, this may find [25P3H1V0.1](http://conwaylife.com/wiki/25P3H1V0.1):
 LifeFind[5, 16, 3, 1, 0]
 ```
 
-You can specify the rule and the [symmetry](http://www.conwaylife.com/wiki/Symmetry) with the options `"Rule"` and `"Symmetry"` (see the screenshot above).
+You can specify the rule and the [symmetry](http://www.conwaylife.com/wiki/Symmetry) with the options `"Rule"` and `"Symmetry"` (see the screenshot above). The default rule is `"B3/S23"` (Conway's Game of Life).
 
 ### Supported rules
 
@@ -42,3 +42,5 @@ You can specify the rule and the [symmetry](http://www.conwaylife.com/wiki/Symme
 * [Generations](http://www.conwaylife.com/wiki/Generations)
 
 The output for Generations rules might be incomplete: there might be "dying" cells outside the bounding box. I will _not_ fix this.
+
+If `"Rule"` is set to `""`, it will try to find a rule that satisify the pattern. This is extremely slow, and the rule string is _not_ simplified.
