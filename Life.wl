@@ -386,7 +386,7 @@ SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
 SearchPattern[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, dx, 0, opts];
 SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
-  Block[{bf, nbhd1, gen, random, c, vcell, vchange, vrule, agarx,
+  Block[{bf, nbhd, gen, random, c, vcell, vchange, vrule, agarx,
     agary, rule, change, knownc, knownr, sym, other, result},
    If[OptionValue["Rule"] == "",
     nbhd = Tr /@ (2^
@@ -403,12 +403,18 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    agarx[True] = agarx[0];
    agarx[a_Integer] :=
     c[Mod[#1, x, 1], Mod[#2 + Quotient[#1, x, 1] a, y, 1], #3] &;
-   agarx[_] = If[OddQ@bf, False, EvenQ@#3] &;
+   agarx[_] =
+    If[If[OptionValue["Rule"] == "",
+       Lookup[OptionValue["KnownRules"], "B0", True], OddQ@bf], False,
+       EvenQ@#3] &;
    agary[{_, a_}] := agary[a];
    agary[True] = agary[0];
    agary[a_Integer] :=
     c[Mod[#1 + Quotient[#2, y, 1] a, x, 1], Mod[#2, y, 1], #3] &;
-   agary[_] = If[OddQ@bf, False, EvenQ@#3] &;
+   agary[_] =
+    If[If[OptionValue["Rule"] == "",
+       Lookup[OptionValue["KnownRules"], "B0", True], OddQ@bf], False,
+       EvenQ@#3] &;
    random =
     RandomChoice[{OptionValue["RandomArray"],
        1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}];
@@ -458,8 +464,7 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
         2}], {3}] /. List -> And;
    If[OptionValue["Rule"] == "",
     knownr =
-     And @@
-      KeyValueMap[vrule[#] \[Equivalent] #2 &,
+     And @@ KeyValueMap[vrule[#] \[Equivalent] #2 &,
        First@KeyIntersection[{OptionValue["KnownRules"], nbhd}]]];
    sym = Array[
      BooleanConvert[
