@@ -11,24 +11,18 @@ ToRLE::usage = "Convert a 2d 0-1 array to a string of RLE format.";
 FromRLE::usage = "Convert a string of RLE format to an array.";
 FromAPGCode::usage = "Convert an apgcode to an array.";
 PlotAndPrintRLE::usage =
-  "Plot the pattern, and print the RLE of the first generation.";
+  "Plot the pattern, and print the RLE of its first generation.";
 SearchPattern::usage =
   "SearchPattern[x, y, p, dx, dy] searches for a pattern with \
 bounding box (x, y), period p, and translating (dx, dy) for each \
 period. It returns a 0-1 array.";
-SearchPatternAndRule::usage =
-  "SearchPatternAndRule[x, y, p, dx, dy] searches for a pattern with \
-bounding box (x, y), period p, and translating (dx, dy) for each \
-period, and a rule that this pattern satisfies. It returns a 0-1 \
-array together with a list of neighborhood strings (e.g., \
-{\"B3a\",\"S2e\"}).";
 LifeFind::usage =
   "LifeFind[x, y, p, dx, dy] searches for a pattern with bounding box \
 (x, y), period p, and translating (dx, dy) for each period. It \
 returns a list of plots, and prints the RLE of the first generation.";
 Predecessor::usage =
-  "Predecessor[pattern, n] tries to find a predecessor of n \
-generations of the pattern.";
+  "Predecessor[pattern, n] tries to find a predecessor of the pattern \
+of n generations.";
 CA::usage =
   "CA[pattern, n, \"Rule\" -> rule] gives \
 CellularAutomaton[{RuleNumber[rule], 2, {1, 1}}, {pattern, 0}, gen].";
@@ -380,9 +374,10 @@ SearchPattern::nsat = "No such pattern.";
 SearchPattern::nsym = "Invalid symmetry. Uses \"C1\" instead.";
 SearchPattern::genper =
   "Nonperiodic patterns are not supported for Generations rules.";
-Options[SearchPattern] = {"Rule" :> $Rule, "Symmetry" -> "C1",
+Options[SearchPattern] = {"Rule" :> $Rule, "Hexagonal" -> False,
+   "Totalistic" -> False, "Generations" -> 2, "Symmetry" -> "C1",
    "Periodic" -> True, "Agar" -> False, "Changing" -> False,
-   "RandomArray" -> 0.5, "KnownCells" -> {},
+   "RandomArray" -> 0.5, "KnownCells" -> {}, "KnownRules" -> <||>,
    "OtherConditions" -> True};
 SearchPattern[x_, y_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, 1, 0, 0, opts];
@@ -391,11 +386,17 @@ SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
 SearchPattern[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, dx, 0, opts];
 SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
-  Block[{bf, gen, random, c, vcell, vchange, agarx, agary, rule,
-    change, known, sym, other, result},
-   bf = FromDigits[
-     IntegerDigits[RuleNumber[OptionValue["Rule"]], 2, 512] + 1, 4];
-   gen = GenerationsNumber[OptionValue["Rule"]];
+  Block[{bf, nbhd1, gen, random, c, vcell, vchange, vrule, agarx,
+    agary, rule, change, knownc, knownr, sym, other, result},
+   If[OptionValue["Rule"] == "",
+    nbhd = Tr /@ (2^
+        If[OptionValue["Hexagonal"],
+         If[OptionValue["Totalistic"], NbhdNumberHT, NbhdNumberH],
+         If[OptionValue["Totalistic"], NbhdNumberT, NbhdNumber]]);
+    gen = OptionValue["Generations"],
+    bf = FromDigits[
+      IntegerDigits[RuleNumber[OptionValue["Rule"]], 2, 512] + 1, 4];
+    gen = GenerationsNumber[OptionValue["Rule"]]];
    If[! OptionValue["Periodic"] && gen > 2,
     Message[SearchPattern::genper]];
    agarx[{a_, _}] := agarx[a];
@@ -411,146 +412,42 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    random =
     RandomChoice[{OptionValue["RandomArray"],
        1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}];
-   c[i_, j_, t_] /; t < 1 || t > p := c[i, j, t] =
-    c[i - Quotient[t, p, 1] dx, j - Quotient[t, p, 1] dy,
-     Mod[t, p, 1]];
-   c[i_, j_, t_] /; i < 1 || i > x := c[i, j, t] =
-    agarx[OptionValue["Agar"]][i, j, t];
-   c[i_, j_, t_] /; j < 1 || j > y := c[i, j, t] =
-    agary[OptionValue["Agar"]][i, j, t];
-   c[i_, j_, t_] := c[i, j, t] =
-    If[random[[i, j, t]] == 1, ! vcell[i, j, t], vcell[i, j, t]];
+   c[i_, j_, t_] /; t < 1 || t > p :=
+    c[i, j, t] =
+     c[i - Quotient[t, p, 1] dx, j - Quotient[t, p, 1] dy,
+      Mod[t, p, 1]];
+   c[i_, j_, t_] /; i < 1 || i > x :=
+    c[i, j, t] = agarx[OptionValue["Agar"]][i, j, t];
+   c[i_, j_, t_] /; j < 1 || j > y :=
+    c[i, j, t] = agary[OptionValue["Agar"]][i, j, t];
+   c[i_, j_, t_] :=
+    c[i, j, t] =
+     If[random[[i, j, t]] == 1, ! vcell[i, j, t], vcell[i, j, t]];
    rule =
-    Array[BooleanConvert[((c[#, #2, #3 - 1] || !
-             Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or]) &&
-           BooleanFunction[bf, 10] @@
-           Flatten@{Array[c, {3, 3, 1}, {##} - 1],
-             c[##]}) ||
-        (! c[#, #2, #3 - 1] &&
-          Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or] && !
-           c[##]), "CNF"] &,
-     {x + 2 + Abs@dx, y + 2 + Abs@dy,
-      If[OptionValue["Periodic"], p, p - 1]},
-     {-Max[dx, 0], -Max[dy, 0], If[OptionValue["Periodic"], 1, 2]},
-     And];
-   change[True] = change[{1, 2}];
-   change[{t1_, t2_}] :=
-    Array[BooleanConvert[
-        If[p == 1, c[##, 1],
-          c[##, t1] \[Xor] c[##, t2]] \[Equivalent] vchange[##],
-        "CNF"] &, {x, y}, 1, And] && Array[vchange, {x, y}, 1, Or];
-   change[_] := True;
-   known =
-    MapIndexed[Switch[#, 1, c @@ #2, 0, ! c @@ #2, _, True] &,
-      Transpose[
-       Switch[ArrayDepth@#, 3, #, 2, {#}, 1, {{#}}, _, {{{}}}] &[
-        PadRight[1 + OptionValue["KnownCells"]] - 1],
-       {3, 1, 2}], {3}] /. List -> And;
-   sym = Array[BooleanConvert[Switch[OptionValue["Symmetry"],
-        "C1", True,
-        "C2", c[##] \[Equivalent] c[x + 1 - #, y + 1 - #2, #3],
-        "C4", c[##] \[Equivalent] c[#2, x + 1 - #, #3],
-        "D2-", c[##] \[Equivalent] c[x + 1 - #, #2, #3],
-        "D2\\", c[##] \[Equivalent] c[#2, #, #3],
-        "D2|", c[##] \[Equivalent] c[#, y + 1 - #2, #3],
-        "D2/", c[##] \[Equivalent] c[y + 1 - #2, x + 1 - #, #3],
-        "D4+",
-        c[##] \[Equivalent] c[x + 1 - #, #2, #3] \[Equivalent]
-         c[#, y + 1 - #2, #3],
-        "D4X",
-        c[##] \[Equivalent] c[#2, #, #3] \[Equivalent]
-         c[y + 1 - #2, x + 1 - #, #3],
-        "D8",
-        c[##] \[Equivalent] c[#2, x + 1 - #, #3] \[Equivalent]
-         c[#2, #, #3],
-        _, Message[SearchPattern::nsym]; True], "CNF"] &,
-     {x, y, p}, 1, And];
-   other =
-    BooleanConvert[OptionValue["OtherConditions"] /. C -> c, "CNF"];
-   result =
-    SatisfiabilityInstances[
-     known && sym && other && rule && change[OptionValue["Changing"]],
-      Flatten@{Array[vcell, {x, y, p}], Array[vchange, {x, y}]},
-     Method -> "SAT"];
-   If[result == {}, Message[SearchPattern::nsat]; {},
-    Nest[BlockMap[Flatten@# /.
-         {{0 | gen - 1, 0} -> 0,
-          {i_, 0} /; i < gen - 1 :> i + 1,
-          {_, i_} /; i > 0 :> i} &,
-       Prepend[#,
-        Drop[ArrayPad[
-          Last@#, {If[dx > 0, {0, dx}, {-dx, 0}],
-           If[dy > 0, {0, dy}, {-dy, 0}]}], dx, dy]],
-       {2, 1, 1}, 1] &,
-     Transpose[
-      Mod[random + ArrayReshape[Boole@result[[1]], {x, y, p}], 2],
-      {2, 3, 1}], gen - 2]]];
-
-Options[SearchPatternAndRule] = {"Hexagonal" -> False,
-   "Totalistic" -> False, "Generations" -> 2, "Symmetry" -> "C1",
-   "Periodic" -> True, "Agar" -> False, "Changing" -> False,
-   "RandomArray" -> 0.5, "KnownCells" -> {}, "KnownRules" -> <||>,
-   "OtherConditions" -> True};
-SearchPatternAndRule[x_, y_, opts : OptionsPattern[]] :=
-  SearchPatternAndRule[x, y, 1, 0, 0, opts];
-SearchPatternAndRule[x_, y_, p_, opts : OptionsPattern[]] :=
-  SearchPatternAndRule[x, y, p, 0, 0, opts];
-SearchPatternAndRule[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
-  SearchPatternAndRule[x, y, p, dx, 0, opts];
-SearchPatternAndRule[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
-  Block[{nbhd, gen, random, c, vcell, vrule, vchange, agarx, agary,
-    rule, change, knownc, knownr, sym, other, result},
-   nbhd = Tr /@ (2^If[OptionValue["Hexagonal"],
-     If[OptionValue["Totalistic"], NbhdNumberHT, NbhdNumberH],
-     If[OptionValue["Totalistic"], NbhdNumberT, NbhdNumber]]);
-   gen = OptionValue["Generations"];
-   If[! OptionValue["Periodic"] && gen > 2,
-    Message[SearchPattern::genper]];
-   agarx[{a_, _}] := agarx[a];
-   agarx[True] = agarx[0];
-   agarx[a_Integer] :=
-    c[Mod[#1, x, 1], Mod[#2 + Quotient[#1, x, 1] a, y, 1], #3] &;
-   agarx[_] =
-    If[Lookup[OptionValue["KnownRules"], "B0", False], EvenQ@#3,
-      False] &;
-   agary[{_, a_}] := agary[a];
-   agary[True] = agary[0];
-   agary[a_Integer] :=
-    c[Mod[#1 + Quotient[#2, y, 1] a, x, 1], Mod[#2, y, 1], #3] &;
-   agary[_] =
-    If[Lookup[OptionValue["KnownRules"], "B0", False], EvenQ@#3,
-      False] &;
-   random =
-    RandomChoice[{OptionValue["RandomArray"],
-       1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}];
-   c[i_, j_, t_] /; t < 1 || t > p := c[i, j, t] =
-    c[i - Quotient[t, p, 1] dx, j - Quotient[t, p, 1] dy,
-     Mod[t, p, 1]];
-   c[i_, j_, t_] /; i < 1 || i > x := c[i, j, t] =
-    agarx[OptionValue["Agar"]][i, j, t];
-   c[i_, j_, t_] /; j < 1 || j > y := c[i, j, t] =
-    agary[OptionValue["Agar"]][i, j, t];
-   c[i_, j_, t_] := c[i, j, t] =
-    If[random[[i, j, t]] == 1, ! vcell[i, j, t], vcell[i, j, t]];
-   rule =
-    Array[And @@
-       Table[BooleanConvert[((c[#, #2, #3 - 1] || !
-               Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1},
-                Or]) && (BooleanFunction[nbhd[k], 9] @@
-               Flatten@
-                Array[c, {3, 3, 1}, {##} - 1] \[Implies] (vrule[
-                 k] \[Equivalent] c[##]))) || (! c[#, #2, #3 - 1] &&
-            Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1},
-             Or] && ! c[##]), "CNF"], {k, Keys@nbhd}] &, {x + 2 +
-       Abs@dx, y + 2 + Abs@dy,
+    Array[If[OptionValue["Rule"] == "",
+      And @@ Table[
+         BooleanConvert[((c[#, #2, #3 - 1] || !
+                Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1},
+                 Or]) && (BooleanFunction[nbhd[k], 9] @@
+                Flatten@
+                 Array[c, {3, 3, 1}, {##} - 1] \[Implies] (vrule[
+                  k] \[Equivalent] c[##]))) || (! c[#, #2, #3 - 1] &&
+             Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1},
+              Or] && ! c[##]), "CNF"], {k, Keys@nbhd}] &,
+      BooleanConvert[((c[#, #2, #3 - 1] || !
+              Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or]) &&
+            BooleanFunction[bf, 10] @@
+            Flatten@{Array[c, {3, 3, 1}, {##} - 1], c[##]}) || (!
+            c[#, #2, #3 - 1] &&
+           Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or] && !
+            c[##]), "CNF"] &], {x + 2 + Abs@dx, y + 2 + Abs@dy,
       If[OptionValue["Periodic"], p,
        p - 1]}, {-Max[dx, 0], -Max[dy, 0],
       If[OptionValue["Periodic"], 1, 2]}, And];
    change[True] = change[{1, 2}];
    change[{t1_, t2_}] :=
     Array[BooleanConvert[
-        If[p == 1, c[##, 1],
-          c[##, t1] \[Xor] c[##, t2]] \[Equivalent] vchange[##],
+        c[##, t1] \[Xor] c[##, t2] \[Equivalent] vchange[##],
         "CNF"] &, {x, y}, 1, And] && Array[vchange, {x, y}, 1, Or];
    change[_] := True;
    knownc =
@@ -559,9 +456,11 @@ SearchPatternAndRule[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
        Switch[ArrayDepth@#, 3, #, 2, {#}, 1, {{#}}, _, {{{}}}] &[
         PadRight[1 + OptionValue["KnownCells"]] - 1], {3, 1,
         2}], {3}] /. List -> And;
-   knownr =
-    And @@ KeyValueMap[vrule[#] \[Equivalent] #2 &,
-      OptionValue["KnownRules"]];
+   If[OptionValue["Rule"] == "",
+    knownr =
+     And @@
+      KeyValueMap[vrule[#] \[Equivalent] #2 &,
+       First@KeyIntersection[{OptionValue["KnownRules"], nbhd}]]];
    sym = Array[
      BooleanConvert[
        Switch[OptionValue["Symmetry"], "C1", True, "C2",
@@ -581,44 +480,47 @@ SearchPatternAndRule[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    other =
     BooleanConvert[OptionValue["OtherConditions"] /. C -> c, "CNF"];
    result =
-    SatisfiabilityInstances[
-     knownc && knownr && sym && other && rule &&
-      change[OptionValue["Changing"]],
-     Flatten@{Array[vcell, {x, y, p}], vrule /@ Keys@nbhd,
-       Array[vchange, {x, y}]}, Method -> "SAT"];
-   If[result == {},
-    Message[SearchPattern::nsat]; {}, {Nest[
-      BlockMap[
+    If[OptionValue["Rule"] == "",
+     SatisfiabilityInstances[
+      knownc && knownr && sym && other && rule &&
+       change[OptionValue["Changing"]],
+      Flatten@{Array[vcell, {x, y, p}], vrule /@ Keys@nbhd,
+        Array[vchange, {x, y}]}, Method -> "SAT"],
+     SatisfiabilityInstances[
+      knownc && sym && other && rule &&
+       change[OptionValue["Changing"]],
+      Flatten@{Array[vcell, {x, y, p}], Array[vchange, {x, y}]},
+      Method -> "SAT"]];
+   If[result == {}, Message[SearchPattern::nsat]; {},
+    If[OptionValue["Rule"] == "", {#,
+        Cases[Thread[
+          Keys@nbhd ->
+           result[[1, x*y*p + 1 ;; x*y*p + Length@nbhd]]], (k_ ->
+            True) :> k]}, #] &@
+     Nest[BlockMap[
         Flatten@# /. {{0 | gen - 1, 0} -> 0, {i_, 0} /; i < gen - 1 :>
              i + 1, {_, i_} /; i > 0 :> i} &,
         Prepend[#,
          Drop[ArrayPad[
            Last@#, {If[dx > 0, {0, dx}, {-dx, 0}],
             If[dy > 0, {0, dy}, {-dy, 0}]}], dx, dy]], {2, 1, 1},
-        1] &,
-      Transpose[
+        1] &, Transpose[
        Mod[random + ArrayReshape[Boole@result[[1]], {x, y, p}],
-        2], {2, 3, 1}], gen - 2],
-     Cases[Thread[
-       Keys@nbhd ->
-        result[[1, x*y*p + 1 ;; x*y*p + Length@nbhd]]], (k_ ->
-         True) :> k]}]];
+        2], {2, 3, 1}], gen - 2]]];
 
 Options[LifeFind] =
-  Union[Options[SearchPattern], Options[SearchPatternAndRule],
-   Options[PlotAndPrintRLE]];
+  Union[Options[SearchPattern], Options[PlotAndPrintRLE]];
 LifeFind[x_, y_, args___, opts : OptionsPattern[]] :=
   Block[{rule, result, bounded}, {rule, result} =
-    If[Quiet[
-      Check[RuleNumber@OptionValue["Rule"]; True, False,
-       RuleNumber::nrule]], {ToString@OptionValue["Rule"],
-      SearchPattern[x, y, args,
-       FilterRules[{opts}, Options[SearchPattern]]]},
+    If[OptionValue["Rule"] == "",
      If[# == {}, {$Rule, {}}, {ToRuleString[#[[2]],
           "Hexagonal" -> OptionValue["Hexagonal"],
           "Generations" -> OptionValue["Generations"]], #[[1]]}] &@
-      SearchPatternAndRule[x, y, args,
-       FilterRules[{opts}, Options[SearchPatternAndRule]]]];
+      SearchPattern[x, y, args,
+       FilterRules[{opts}, Options[SearchPattern]]], {ToString@
+       OptionValue["Rule"],
+      SearchPattern[x, y, args,
+       FilterRules[{opts}, Options[SearchPattern]]]}];
    bounded[a_?AtomQ] := bounded[{a, a}];
    bounded[{0 | True, 0 | True}] :=
     ":T" <> ToString@y <> "," <> ToString@x;

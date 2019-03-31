@@ -9,7 +9,7 @@ A simple and naïve Game of Life pattern searcher written in Wolfram Language.
 
 我不怎么懂编程，代码肯定有很多 bug。遇到问题欢迎来提 [issue](https://github.com/AlephAlpha/LifeFind/issues)。
 
-以下是简短的英文说明。详细的用法见[维基](https://github.com/AlephAlpha/LifeFind/wiki)（仅中文）。
+以下是简短的英文说明。详细的用法见[维基](https://github.com/AlephAlpha/LifeFind/wiki)（仅中文），或者[使用范例](https://alephalpha.github.io/2019/03/04/%E7%94%A8-Mathematica-%E6%90%9C%E7%B4%A2%E7%94%9F%E5%91%BD%E6%B8%B8%E6%88%8F%E4%B8%AD%E7%9A%84%E9%9D%99%E7%89%A9%EF%BC%88%E4%B8%89%EF%BC%89/)。
 
 ---
 
