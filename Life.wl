@@ -361,9 +361,13 @@ FromAPGCode[apgcode_String] :=
 
 Options[PlotAndPrintRLE] =
   Join[Options[ToRLE],
-   Options[ArrayPlot] /. (Mesh -> False) -> (Mesh -> All)];
+   Options[ArrayPlot] /. (Mesh -> False) -> (Mesh ->
+       All), {"Generations" -> Automatic}];
 PlotAndPrintRLE[pattern_, opts : OptionsPattern[]] :=
-  Block[{gen = GenerationsNumber[OptionValue["Rule"]]},
+  Block[{gen =
+     If[OptionValue["Generations"] === Automatic,
+      GenerationsNumber[OptionValue["Rule"]],
+      OptionValue["Generations"]]},
    ArrayPlot[# /. i_ /; i > 0 :> (gen - i)/(gen - 1),
       FilterRules[{opts}, Options[ArrayPlot]], Mesh -> All,
       ColorFunctionScaling -> False] & /@
