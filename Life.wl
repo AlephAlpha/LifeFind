@@ -409,16 +409,16 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
     c[Mod[#1, x, 1], Mod[#2 + Quotient[#1, x, 1] a, y, 1], #3] &;
    agarx[_] =
     If[If[OptionValue["Rule"] == "",
-       Lookup[OptionValue["KnownRules"], "B0", True], OddQ@bf], False,
-       EvenQ@#3] &;
+       Lookup[OptionValue["KnownRules"], "B0", False], EvenQ@bf], EvenQ@#3,
+       False] &;
    agary[{_, a_}] := agary[a];
    agary[True] = agary[0];
    agary[a_Integer] :=
     c[Mod[#1 + Quotient[#2, y, 1] a, x, 1], Mod[#2, y, 1], #3] &;
    agary[_] =
     If[If[OptionValue["Rule"] == "",
-       Lookup[OptionValue["KnownRules"], "B0", True], OddQ@bf], False,
-       EvenQ@#3] &;
+       Lookup[OptionValue["KnownRules"], "B0", False], EvenQ@bf], EvenQ@#3,
+       False] &;
    random =
     RandomChoice[{OptionValue["RandomArray"],
        1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}];
