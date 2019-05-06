@@ -390,35 +390,56 @@ SearchPattern[x_, y_, p_, opts : OptionsPattern[]] :=
 SearchPattern[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, dx, 0, opts];
 SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
-  Block[{bf, nbhd, gen, random, c, vcell, vchange, vrule, agarx,
-    agary, rule, change, knownc, knownr, sym, other, result},
+  Block[{rulenum, nbhd, gen, random, c, i, j, t, vcell, vchange,
+    vrule, agarx, agary, cellcond, cond, change, knownc, knownr, sym,
+    other, result},
    If[OptionValue["Rule"] == "",
     nbhd = Tr /@ (2^
         If[OptionValue["Hexagonal"],
          If[OptionValue["Totalistic"], NbhdNumberHT, NbhdNumberH],
          If[OptionValue["Totalistic"], NbhdNumberT, NbhdNumber]]);
     gen = OptionValue["Generations"],
-    bf = FromDigits[
+    rulenum =
+     FromDigits[
       IntegerDigits[RuleNumber[OptionValue["Rule"]], 2, 512] + 1, 4];
     gen = GenerationsNumber[OptionValue["Rule"]]];
    If[! OptionValue["Periodic"] && gen > 2,
     Message[SearchPattern::genper]];
+   cellcond[i_, j_, t_] =
+    If[OptionValue["Rule"] == "",
+     And @@ Table[
+       BooleanConvert[((c[i, j, t - 1] || !
+              Array[c, {1, 1, gen - 1}, {i, j, t - gen + 1},
+               Or]) && (BooleanFunction[nbhd[k], 9] @@
+              Flatten@
+               Array[c, {3, 3, 1}, {i, j, t} - 1] \[Implies] (vrule[
+                k] \[Equivalent] c[i, j, t]))) || (! c[i, j, t - 1] &&
+
+           Array[c, {1, 1, gen - 1}, {i, j, t - gen + 1}, Or] && !
+            c[i, j, t]), "CNF"], {k, Keys@nbhd}],
+     BooleanConvert[((c[i, j, t - 1] || !
+            Array[c, {1, 1, gen - 1}, {i, j, t - gen + 1}, Or]) &&
+         BooleanFunction[rulenum, 10] @@
+          Flatten@{Array[c, {3, 3, 1}, {i, j, t} - 1],
+            c[i, j, t]}) || (! c[i, j, t - 1] &&
+         Array[c, {1, 1, gen - 1}, {i, j, t - gen + 1}, Or] && !
+          c[i, j, t]), "CNF"]];
    agarx[{a_, _}] := agarx[a];
    agarx[True] = agarx[0];
    agarx[a_Integer] :=
     c[Mod[#1, x, 1], Mod[#2 + Quotient[#1, x, 1] a, y, 1], #3] &;
    agarx[_] =
     If[If[OptionValue["Rule"] == "",
-       Lookup[OptionValue["KnownRules"], "B0", False], EvenQ@bf], EvenQ@#3,
-       False] &;
+       Lookup[OptionValue["KnownRules"], "B0", False], EvenQ@rulenum],
+       EvenQ@#3, False] &;
    agary[{_, a_}] := agary[a];
    agary[True] = agary[0];
    agary[a_Integer] :=
     c[Mod[#1 + Quotient[#2, y, 1] a, x, 1], Mod[#2, y, 1], #3] &;
    agary[_] =
     If[If[OptionValue["Rule"] == "",
-       Lookup[OptionValue["KnownRules"], "B0", False], EvenQ@bf], EvenQ@#3,
-       False] &;
+       Lookup[OptionValue["KnownRules"], "B0", False], EvenQ@rulenum],
+       EvenQ@#3, False] &;
    random =
     RandomChoice[{OptionValue["RandomArray"],
        1 - OptionValue["RandomArray"]} -> {1, 0}, {x, y, p}];
@@ -433,27 +454,6 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    c[i_, j_, t_] :=
     c[i, j, t] =
      If[random[[i, j, t]] == 1, ! vcell[i, j, t], vcell[i, j, t]];
-   rule =
-    Array[If[OptionValue["Rule"] == "",
-      And @@ Table[
-         BooleanConvert[((c[#, #2, #3 - 1] || !
-                Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1},
-                 Or]) && (BooleanFunction[nbhd[k], 9] @@
-                Flatten@
-                 Array[c, {3, 3, 1}, {##} - 1] \[Implies] (vrule[
-                  k] \[Equivalent] c[##]))) || (! c[#, #2, #3 - 1] &&
-             Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1},
-              Or] && ! c[##]), "CNF"], {k, Keys@nbhd}] &,
-      BooleanConvert[((c[#, #2, #3 - 1] || !
-              Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or]) &&
-            BooleanFunction[bf, 10] @@
-            Flatten@{Array[c, {3, 3, 1}, {##} - 1], c[##]}) || (!
-            c[#, #2, #3 - 1] &&
-           Array[c, {1, 1, gen - 1}, {##} - {0, 0, gen - 1}, Or] && !
-            c[##]), "CNF"] &], {x + 2 + Abs@dx, y + 2 + Abs@dy,
-      If[OptionValue["Periodic"], p,
-       p - 1]}, {-Max[dx, 0], -Max[dy, 0],
-      If[OptionValue["Periodic"], 1, 2]}, And];
    change[True] = change[{1, 2}];
    change[{t1_, t2_}] :=
     Array[BooleanConvert[
@@ -490,15 +490,20 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
        "CNF"] &, {x, y, p}, 1, And];
    other =
     BooleanConvert[OptionValue["OtherConditions"] /. C -> c, "CNF"];
+   cond =
+    Array[cellcond, {x + 2 + Abs@dx, y + 2 + Abs@dy,
+      If[OptionValue["Periodic"], p,
+       p - 1]}, {-Max[dx, 0], -Max[dy, 0],
+      If[OptionValue["Periodic"], 1, 2]}, And];
    result =
     If[OptionValue["Rule"] == "",
      SatisfiabilityInstances[
-      knownc && knownr && sym && other && rule &&
+      knownc && knownr && sym && other && cond &&
        change[OptionValue["Changing"]],
       Flatten@{Array[vcell, {x, y, p}], vrule /@ Keys@nbhd,
         Array[vchange, {x, y}]}, Method -> "SAT"],
      SatisfiabilityInstances[
-      knownc && sym && other && rule &&
+      knownc && sym && other && cond &&
        change[OptionValue["Changing"]],
       Flatten@{Array[vcell, {x, y, p}], Array[vchange, {x, y}]},
       Method -> "SAT"]];
