@@ -391,8 +391,8 @@ SearchPattern[x_, y_, p_, dx_, opts : OptionsPattern[]] :=
   SearchPattern[x, y, p, dx, 0, opts];
 SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
   Block[{rulenum, nbhd, gen, random, c, i, j, t, vcell, vchange,
-    vrule, agarx, agary, cellcond, cond, change, knownc, knownr, sym,
-    other, result},
+    vrule, agarx, agary, cellcond, cond, change, knownc, knownr,
+    cellsym, sym, other, result},
    If[OptionValue["Rule"] == "",
     nbhd = Tr /@ (2^
         If[OptionValue["Hexagonal"],
@@ -408,22 +408,37 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
    cellcond[i_, j_, t_] =
     If[OptionValue["Rule"] == "",
      And @@ Table[
-       BooleanConvert[((c[i, j, t - 1] || !
-              Array[c, {1, 1, gen - 1}, {i, j, t - gen + 1},
-               Or]) && (BooleanFunction[nbhd[k], 9] @@
+       BooleanConvert[((c[i, j, t] || !
+              Array[c, {1, 1, gen - 1}, {i, j, t - gen + 2},
+               Or]) && (BooleanFunction[nbhd[k],
               Flatten@
-               Array[c, {3, 3, 1}, {i, j, t} - 1] \[Implies] (vrule[
-                k] \[Equivalent] c[i, j, t]))) || (! c[i, j, t - 1] &&
-
-           Array[c, {1, 1, gen - 1}, {i, j, t - gen + 1}, Or] && !
-            c[i, j, t]), "CNF"], {k, Keys@nbhd}],
-     BooleanConvert[((c[i, j, t - 1] || !
-            Array[c, {1, 1, gen - 1}, {i, j, t - gen + 1}, Or]) &&
-         BooleanFunction[rulenum, 10] @@
-          Flatten@{Array[c, {3, 3, 1}, {i, j, t} - 1],
-            c[i, j, t]}) || (! c[i, j, t - 1] &&
-         Array[c, {1, 1, gen - 1}, {i, j, t - gen + 1}, Or] && !
-          c[i, j, t]), "CNF"]];
+               Array[c, {3, 3, 1}, {i - 1, j - 1,
+                 t}]] \[Implies] (vrule[k] \[Equivalent]
+               c[i, j, t + 1]))) || (! c[i, j, t] &&
+           Array[c, {1, 1, gen - 1}, {i, j, t - gen + 2}, Or] && !
+            c[i, j, t + 1]), "CNF"], {k, Keys@nbhd}],
+     BooleanConvert[((c[i, j, t] || !
+            Array[c, {1, 1, gen - 1}, {i, j, t - gen + 2}, Or]) &&
+         BooleanFunction[rulenum,
+          Flatten@{Array[c, {3, 3, 1}, {i - 1, j - 1, t}],
+            c[i, j, t + 1]}]) || (! c[i, j, t] &&
+         Array[c, {1, 1, gen - 1}, {i, j, t - gen + 2}, Or] && !
+          c[i, j, t + 1]), "CNF"]];
+   cellsym[i_, j_, t_] =
+    BooleanConvert[
+     Switch[OptionValue["Symmetry"], "C1", True, "C2",
+      c[i, j, t] \[Equivalent] c[x + 1 - i, y + 1 - j, t], "C4",
+      c[i, j, t] \[Equivalent] c[j, x + 1 - i, t], "D2-",
+      c[i, j, t] \[Equivalent] c[x + 1 - i, j, t], "D2\\",
+      c[i, j, t] \[Equivalent] c[j, i, t], "D2|",
+      c[i, j, t] \[Equivalent] c[i, y + 1 - j, t], "D2/",
+      c[i, j, t] \[Equivalent] c[y + 1 - j, x + 1 - i, t], "D4+",
+      c[i, j, t] \[Equivalent] c[x + 1 - i, j, t] \[Equivalent]
+       c[i, y + 1 - j, t], "D4X",
+      c[i, j, t] \[Equivalent] c[j, i, t] \[Equivalent]
+       c[y + 1 - j, x + 1 - i, t], "D8",
+      c[i, j, t] \[Equivalent] c[j, x + 1 - i, t] \[Equivalent]
+       c[j, i, t], _, Message[SearchPattern::nsym]; True], "CNF"];
    agarx[{a_, _}] := agarx[a];
    agarx[True] = agarx[0];
    agarx[a_Integer] :=
@@ -472,29 +487,15 @@ SearchPattern[x_, y_, p_, dx_, dy_, OptionsPattern[]] :=
     knownr =
      And @@ KeyValueMap[vrule[#] \[Equivalent] #2 &,
        First@KeyIntersection[{OptionValue["KnownRules"], nbhd}]]];
-   sym = Array[
-     BooleanConvert[
-       Switch[OptionValue["Symmetry"], "C1", True, "C2",
-        c[##] \[Equivalent] c[x + 1 - #, y + 1 - #2, #3], "C4",
-        c[##] \[Equivalent] c[#2, x + 1 - #, #3], "D2-",
-        c[##] \[Equivalent] c[x + 1 - #, #2, #3], "D2\\",
-        c[##] \[Equivalent] c[#2, #, #3], "D2|",
-        c[##] \[Equivalent] c[#, y + 1 - #2, #3], "D2/",
-        c[##] \[Equivalent] c[y + 1 - #2, x + 1 - #, #3], "D4+",
-        c[##] \[Equivalent] c[x + 1 - #, #2, #3] \[Equivalent]
-         c[#, y + 1 - #2, #3], "D4X",
-        c[##] \[Equivalent] c[#2, #, #3] \[Equivalent]
-         c[y + 1 - #2, x + 1 - #, #3], "D8",
-        c[##] \[Equivalent] c[#2, x + 1 - #, #3] \[Equivalent]
-         c[#2, #, #3], _, Message[SearchPattern::nsym]; True],
-       "CNF"] &, {x, y, p}, 1, And];
+   sym = Array[cellsym, {x, y, p}, 1, And];
    other =
     BooleanConvert[OptionValue["OtherConditions"] /. C -> c, "CNF"];
    cond =
-    Array[cellcond, {x + 2 + Abs@dx, y + 2 + Abs@dy,
-      If[OptionValue["Periodic"], p,
-       p - 1]}, {-Max[dx, 0], -Max[dy, 0],
-      If[OptionValue["Periodic"], 1, 2]}, And];
+    Array[cellcond, {x + 2, y + 2,
+       If[OptionValue["Periodic"], p, p - 1]}, {0, 0, 1}, And] &&
+     If[TrueQ[! OptionValue["Agar"]],
+      Array[If[0 <= # + dx <= x + 1 && 0 <= #2 + dy <= y + 1,
+         True, ! c[##, 1]] &, {x, y}, 1, And], True];
    result =
     If[OptionValue["Rule"] == "",
      SatisfiabilityInstances[
