@@ -6,7 +6,7 @@ A simple and naïve Game of Life pattern searcher written in Wolfram Language.
 
 这是个用来搜索生命游戏（以及别的 Life-like 的元胞自动机）里的图样的 Mathematica 包。搜索方式是把图样要满足的条件看成一个 [SAT 问题](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem)，然后用 Mathematica 自带的 [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html) 函数求解。灵感来自 Oscar Cunningham 写的 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)。
 
-这个包就是写着玩的，搜索速度慢得离谱，完全无法搜索周期稍大的图样。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)（可搜各种图样），或者 [ntzfind](https://github.com/rokicki/ntzfind)（专搜飞船）。更多搜索工具见[《生命游戏搜索程序汇总》](https://www.jianshu.com/p/81c90ba597ea)。
+这个包就是写着玩的，搜索速度慢得离谱，完全无法搜索周期稍大的图样。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)（可搜各种图样），或者 [ntzfind](https://github.com/rokicki/ntzfind)（专搜飞船）。更多搜索工具见[《生命游戏搜索程序汇总》](https://alephalpha.github.io/2018/08/10/%E7%94%9F%E5%91%BD%E6%B8%B8%E6%88%8F%E6%90%9C%E7%B4%A2%E7%A8%8B%E5%BA%8F%E6%B1%87%E6%80%BB/)。
 
 我不怎么懂编程，代码肯定有很多 bug。遇到问题欢迎来提 [issue](https://github.com/AlephAlpha/LifeFind/issues)。
 
@@ -34,14 +34,16 @@ For example, this may find [25P3H1V0.1](http://conwaylife.com/wiki/25P3H1V0.1):
 LifeFind[5, 16, 3, 1, 0]
 ```
 
-You can specify the rule and the [symmetry](http://www.conwaylife.com/wiki/Symmetry) with the options `"Rule"` and `"Symmetry"` (see the screenshot above). The default rule is `"B3/S23"` (Conway's Game of Life).
+You can specify the rule and the [symmetry](http://www.conwaylife.com/wiki/Symmetry) with options `"Rule"` and `"Symmetry"` (see the screenshot above). The default rule is `"B3/S23"` (Conway's Game of Life). The supported symmetries are the same as Logic Life Search.
+
+If you can read Chinese, please read the [Wiki](https://github.com/AlephAlpha/LifeFind/wiki) or these [usage examples](https://alephalpha.github.io/2019/03/04/%E7%94%A8-Mathematica-%E6%90%9C%E7%B4%A2%E7%94%9F%E5%91%BD%E6%B8%B8%E6%88%8F%E4%B8%AD%E7%9A%84%E9%9D%99%E7%89%A9%EF%BC%88%E4%B8%89%EF%BC%89/).
 
 ## Supported rules
 
 * [Totalistic](http://conwaylife.com/wiki/Outer-totalistic_Life-like_cellular_automata) and [non-totalistic](http://conwaylife.com/wiki/Non-totalistic_Life-like_cellular_automaton) life-like rules
 * Totalistic and non-totalistic [hexagonal](http://www.conwaylife.com/wiki/Hexagonal_neighbourhood) rules (hexagonal symmetries are _not_ supported)
-* [Generations](http://www.conwaylife.com/wiki/Generations)
+* The corresponding [Generations](http://www.conwaylife.com/wiki/Generations) rules.
 
 The output for Generations rules might be incomplete: there might be "dying" cells outside the bounding box. I will _not_ fix this.
 
-If `"Rule"` is set to `""`, it will try to find a rule that satisify the pattern. This is extremely slow, and the rule string is _not_ simplified.
+If `"Rule"` is set to `""`, it will search in an unspecified rule, and return both the rule and the pattern. This is extremely slow, and the rule string is _not_ simplified.
