@@ -213,14 +213,16 @@ NbhdNumberHT =
 RuleNumber::nrule = "Invalid rule. Uses " <> $Rule <> " instead.";
 RuleNumber[n_Integer] := n;
 RuleNumber[rule_String] :=
-  Block[{parseNbhd, parseNbhdH, patNbhd, patNbhdH, toNum, sb},
-   {parseNbhd, parseNbhdH} =
+  Block[{parseNbhd, parseNbhdH, parseNbhdV, patNbhd, patNbhdH,
+    patNbhdV, toNum, sb},
+   {parseNbhd, parseNbhdH, parseNbhdV} =
     KeyValueMap[
       n : #1 ~~ h : ("-" | "") ~~ s : (Alternatives @@ #2) ... :>
-        Sequence @@ Table[n <> c,
-          {c, Which[#2 == {}, {""},
-            s == "" || h == "-", Complement[#2, Characters@s],
-            True, Characters@s]}] &] /@
+        Sequence @@
+         Table[n <> c, {c,
+           Which[#2 == {}, {""}, s == "" || h == "-",
+            Complement[#2, Characters@s], True,
+            Characters@s]}] &] /@
      {<|"0" | "8" -> {},
        "1" | "7" -> {"c", "e"},
        "2" | "6" -> {"a", "c", "e", "i", "k", "n"},
@@ -228,53 +230,32 @@ RuleNumber[rule_String] :=
        "4" -> {"a", "c", "e", "i", "j", "k", "n", "q", "r", "t", "w",
          "y", "z"}|>,
       <|"0" | "1" | "5" | "6" -> {},
-       "2" | "3" | "4" -> {"o", "m", "p"}|>};
-   {patNbhd, patNbhdH} =
+       "2" | "3" | "4" -> {"o", "m", "p"}|>,
+      <|"0" | "1" | "2" | "3" | "4" -> {}|>};
+   {patNbhd, patNbhdH, patNbhdV} =
     Alternatives @@
         Keys[# /.
           Verbatim[Pattern][_, p_] :> p] ... & /@
-     {parseNbhd, parseNbhdH};
-   toNum[{s_, b_}] :=
-    BitOr @@
-     Lookup[Tr /@ (2^NbhdNumber),
-      Join["B" <> # & /@
-        StringCases[b, parseNbhd, IgnoreCase -> True],
-       "S" <> # & /@ StringCases[s, parseNbhd, IgnoreCase -> True]]];
-   toNum[{s_, b_, "v"}] :=
-    BitOr @@
-     Lookup[Tr /@ (2^NbhdNumberV),
-      Join["B" <> # & /@ Characters@b, "S" <> # & /@ Characters@s]];
-   toNum[{s_, b_, "h"}] :=
-    BitOr @@
-     Lookup[Tr /@ (2^NbhdNumberH),
-      Join["B" <> # & /@
-        StringCases[b, parseNbhdH, IgnoreCase -> True],
-       "S" <> # & /@
-        StringCases[s, parseNbhdH, IgnoreCase -> True]]];
-   sb = StringCases[
-      rule, {StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~ "b" ~~
-         b : patNbhd ~~ "/" | "/s" | "s" ~~
-        s : patNbhd ~~ ("/" ~~ DigitCharacter ..) | "" ~~
-        ":" | EndOfString :> {s, b},
-      StartOfString ~~ s : patNbhd ~~ "/" ~~
-        b : patNbhd ~~ ("/" ~~ DigitCharacter ..) | "" ~~
-        ":" | EndOfString :> {s, b},
-      StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~ "b" ~~
-        b : ("0" | "1" | "2" | "3" | "4") ... ~~ "/" | "/s" | "s" ~~
-        s : ("0" | "1" | "2" | "3" | "4") ... ~~ ("/" ~~
-           DigitCharacter ..) | "" ~~ "v" ~~ ":" | EndOfString :>
-        {s, b, "v"},
-      StartOfString ~~ s : ("0" | "1" | "2" | "3" | "4") ... ~~ "/" ~~
-        b : ("0" | "1" | "2" | "3" | "4") ... ~~ ("/" ~~
-           DigitCharacter ..) | "" ~~ "v" ~~ ":" | EndOfString :>
-        {s, b, "v"},
-      StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~ "b" ~~
-        b : patNbhdH ~~ "/" | "/s" | "s" ~~
-        s : patNbhdH ~~ ("/" ~~ DigitCharacter ..) | "" ~~ "h" ~~
-        ":" | EndOfString :> {s, b, "h"},
-      StartOfString ~~ s : patNbhdH ~~ "/" ~~
-        b : patNbhdH ~~ ("/" ~~ DigitCharacter ..) | "" ~~ "h" ~~
-        ":" | EndOfString :> {s, b, "h"}},
+     {parseNbhd,
+      parseNbhdH, parseNbhdV};
+   toNum[{s_, b_, n_}] :=
+    With[{nbhd =
+       Switch[n, "v", NbhdNumberV, "h", NbhdNumberH, _, NbhdNumber],
+      parse =
+       Switch[n, "v", parseNbhdV, "h", parseNbhdH, _, parseNbhd]},
+     BitOr @@
+      Lookup[Tr /@ (2^nbhd),
+       Join["B" <> # & /@ StringCases[b, parse, IgnoreCase -> True],
+        "S" <> # & /@ StringCases[s, parse, IgnoreCase -> True]]]];
+   sb = StringCases[rule,
+     Catenate[{StartOfString ~~ ("g" ~~ DigitCharacter ..) | "" ~~
+           "b" ~~ b : # ~~ "/" | "/s" | "s" ~~
+           s : # ~~ ("/" ~~ DigitCharacter ..) | "" ~~ #2 ~~
+           ":" | EndOfString :> {s, b, #2},
+         StartOfString ~~ s : # ~~ "/" ~~
+           b : # ~~ ("/" ~~ DigitCharacter ..) | "" ~~ #2 ~~
+           ":" | EndOfString :> {s, b, #2}} & @@@ {{patNbhd,
+         ""}, {patNbhdV, "v"}, {patNbhdH, "h"}}],
      IgnoreCase -> True];
    If[sb == {}, Message[RuleNumber::nrule];
     RuleNumber[$Rule], toNum[sb[[1]]]]];
@@ -344,20 +325,22 @@ FromRLE[rle_String] :=
 
 FromAPGCode::napg = "Invalid apgcode.";
 FromAPGCode[apgcode_String] :=
-  If[# == {},
-     Message[FromAPGCode::napg]; {}, #[[1]] /.
-      {a___, {0 ...} ...} :> {a}] &[
+  If[# == {}, Message[FromAPGCode::napg]; {},
+     Total@MapIndexed[#1*
+          Tr@#2 &, #[[1]]] /. {a___, {0 ...} ...} :> {a}] &[
    StringCases[apgcode,
-    StartOfString ~~ "x" ~~ ___ ~~ "_" ~~ code : WordCharacter ... :>
-     Transpose[
-      Join @@ Reverse /@ IntegerDigits[#, 2, 5] & /@
-       Thread@PadRight@
-         StringCases[
-          StringSplit[
-           StringReplace[
-            code, {"y" ~~ d_ :> StringRepeat["0", 4 + FromDigits@d],
-             "w" -> "00", "x" -> "000"}], "z"],
-          d_ :> FromDigits@d]]]];
+    StartOfString ~~ "x" ~~ Shortest[___] ~~
+      codes : ("_" ~~ WordCharacter ...) .. :>
+     PadRight[
+      Transpose[
+         Join @@ Reverse /@ IntegerDigits[#, 2, 5] & /@
+          Thread@PadRight@
+            StringCases[
+             StringSplit[
+              StringReplace[#, {"y" ~~ d_ :>
+                 StringRepeat["0", 4 + FromDigits@d], "w" -> "00",
+                "x" -> "000"}], "z"], d_ :> FromDigits@d]] & /@
+       StringSplit[codes, "_"]]]];
 
 Options[PlotAndPrintRLE] =
   Join[Options[ToRLE],
