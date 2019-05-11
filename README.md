@@ -6,11 +6,11 @@ A simple and naïve Game of Life pattern searcher written in Wolfram Language.
 
 这是个用来搜索生命游戏（以及别的 Life-like 的元胞自动机）里的图样的 Mathematica 包。搜索方式是把图样要满足的条件看成一个 [SAT 问题](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem)，然后用 Mathematica 自带的 [`SatisfiabilityInstances`](http://reference.wolfram.com/language/ref/SatisfiabilityInstances.html) 函数求解。灵感来自 Oscar Cunningham 写的 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)。
 
-这个包就是写着玩的，搜索速度慢得离谱，完全无法搜索周期稍大的图样。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)（可搜各种图样），或者 [ntzfind](https://github.com/rokicki/ntzfind)（专搜飞船）。更多搜索工具见[《生命游戏搜索程序汇总》](https://alephalpha.github.io/2018/08/10/%E7%94%9F%E5%91%BD%E6%B8%B8%E6%88%8F%E6%90%9C%E7%B4%A2%E7%A8%8B%E5%BA%8F%E6%B1%87%E6%80%BB/)。
+这个包就是写着玩的，搜索速度慢得离谱，完全无法搜索周期稍大的图样。如果需要实用一点的搜索工具，推荐使用 [Logic Life Search](https://github.com/OscarCunningham/logic-life-search)（可搜各种图样），或者 [ntzfind](https://github.com/rokicki/ntzfind)（专搜飞船）。更多搜索工具见[《生命游戏搜索程序汇总》](https://alephalpha.github.io/posts/96f4eb3/)。
 
 我不怎么懂编程，代码肯定有很多 bug。遇到问题欢迎来提 [issue](https://github.com/AlephAlpha/LifeFind/issues)。
 
-以下是简短的英文说明。详细的用法见[维基](https://github.com/AlephAlpha/LifeFind/wiki)（仅中文），或者[使用范例](https://alephalpha.github.io/2019/03/04/%E7%94%A8-Mathematica-%E6%90%9C%E7%B4%A2%E7%94%9F%E5%91%BD%E6%B8%B8%E6%88%8F%E4%B8%AD%E7%9A%84%E9%9D%99%E7%89%A9%EF%BC%88%E4%B8%89%EF%BC%89/)。
+以下是简短的英文说明。详细的用法见[维基](https://github.com/AlephAlpha/LifeFind/wiki)（仅中文），或者[使用范例](https://alephalpha.github.io/posts/18a3d91c/)。
 
 ---
 
@@ -36,7 +36,7 @@ LifeFind[5, 16, 3, 1, 0]
 
 You can specify the rule and the [symmetry](http://www.conwaylife.com/wiki/Symmetry) with options `"Rule"` and `"Symmetry"` (see the screenshot above). The default rule is `"B3/S23"` (Conway's Game of Life). The supported symmetries are the same as Logic Life Search.
 
-If you can read Chinese, please read the [Wiki](https://github.com/AlephAlpha/LifeFind/wiki) or these [usage examples](https://alephalpha.github.io/2019/03/04/%E7%94%A8-Mathematica-%E6%90%9C%E7%B4%A2%E7%94%9F%E5%91%BD%E6%B8%B8%E6%88%8F%E4%B8%AD%E7%9A%84%E9%9D%99%E7%89%A9%EF%BC%88%E4%B8%89%EF%BC%89/).
+If you can read Chinese, please read the [Wiki](https://github.com/AlephAlpha/LifeFind/wiki) or these [usage examples](https://alephalpha.github.io/posts/18a3d91c/).
 
 ## Supported rules
 
