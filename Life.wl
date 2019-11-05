@@ -29,6 +29,10 @@ CellularAutomaton[{RuleNumber[rule], 2, {1, 1}}, {pattern, 0}, gen].";
 ExportGIF::usage =
   "ExportGIF[file, pattern, n] plots the pattern for n generations \
 and export it to a GIF file.";
+ExportSpaceshipGIF::usage = 
+  "ExportSpaceshipGIF[file, pattern, p, dx, dy, s] plots a spaceship \
+of period p, translating (dx, dy) for each period, and export it to a \
+GIF file. Each cell has size (s, s) in the output GIF.";
 PatternRules::usage =
   "Give all possible rules of a pattern. The result is given in an \
 Association, where True (resp. False) means this term should (resp. \
@@ -559,6 +563,24 @@ ExportGIF[file_, pattern_, gen_, opts : OptionsPattern[]] :=
     CA[pattern, gen - 1, FilterRules[{opts}, Options[CA]]],
    "DisplayDurations" -> OptionValue["DisplayDurations"],
    "AnimationRepetitions" -> Infinity];
+
+Options[ExportSpaceshipGIF] = 
+  Join[{"DisplayDurations" -> 0.1, "Padding" -> 2}, Options[CA]];
+ExportSpaceshipGIF[file_, pattern_, p_, dx_, dy_, s_, 
+   opts : OptionsPattern[]] := 
+  With[{g = GCD[dx, dy], u = s GCD[dx, dy]/p}, 
+   Export[file, 
+    Catenate@
+     MapIndexed[
+      Table[Image@
+         RotateLeft[
+          ArrayFlatten[
+           Map[ArrayPad[Table[1 - #, s - 2, s - 2], 1, 0.6] &, 
+            ArrayPad[#, OptionValue["Padding"]], {2}]],
+          {dx, dy}/g Tr[u (#2 - 1) + i]], {i, u}] &, 
+      CA[pattern, p - 1, FilterRules[{opts}, Options[CA]]]], 
+    "DisplayDurations" -> OptionValue["DisplayDurations"], 
+    "AnimationRepetitions" -> Infinity]];
 
 PatternRules::nrule = "No such rule.";
 Options[PatternRules] := {"B0" -> False, "Hexagonal" -> False,
